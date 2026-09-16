@@ -4,7 +4,7 @@ import { available } from "@/lib/domain";
 import { coins } from "@/lib/format";
 import { Logo } from "@/components/ui";
 import { BottomNav } from "@/components/bottom-nav";
-import { IconHome, IconTicket, IconTrophy, IconUser } from "@/components/icons";
+import { IconHome, IconTicket, IconBook, IconUser } from "@/components/icons";
 import Link from "next/link";
 
 export default async function PlayLayout({ children }: { children: React.ReactNode }) {
@@ -16,8 +16,8 @@ export default async function PlayLayout({ children }: { children: React.ReactNo
 
   const nav = [
     { href: "/play", label: "Arena", icon: <IconHome />, exact: true },
-    { href: "/play/results", label: "Results", icon: <IconTrophy /> },
     { href: "/play/bets", label: "My Bets", icon: <IconTicket /> },
+    { href: "/play/statement", label: "Passbook", icon: <IconBook /> },
     { href: "/play/account", label: "Account", icon: <IconUser /> },
   ];
 

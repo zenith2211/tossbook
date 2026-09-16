@@ -1,7 +1,9 @@
 import { getSessionUser } from "@/lib/auth";
 import { available, listMatches, listMarkets, listBetsForUser } from "@/lib/domain";
 import { MatchCard, type MatchDTO } from "@/components/match-card";
+import { FundRequest } from "@/components/fund-request";
 import { Empty, Card, CardHead } from "@/components/ui";
+import { coins } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,7 @@ export default async function PlayHome() {
     status: m.status,
     start_time: m.start_time,
     end_time: m.end_time,
+    image_url: m.image_url,
     markets: listMarkets(m.id).map((mk) => ({
       id: mk.id,
       type: mk.type,
@@ -47,6 +50,22 @@ export default async function PlayHome() {
       <div>
         <h1 className="text-lg font-bold">Hi, {me.name} 👋</h1>
         <p className="text-sm text-muted">Pick a match and back the toss.</p>
+      </div>
+
+      <div className="card-shadow rounded-2xl border border-line bg-panel p-4">
+        <div className="mb-3 flex items-end justify-between">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Available balance</div>
+            <div className="text-2xl font-extrabold tabular-nums text-gold">{coins(avail)}</div>
+          </div>
+          {me.exposure > 0 ? (
+            <div className="text-right">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Exposure</div>
+              <div className="text-sm font-bold tabular-nums text-lay">{coins(me.exposure)}</div>
+            </div>
+          ) : null}
+        </div>
+        <FundRequest username={me.username} available={avail} />
       </div>
 
       {live.length > 0 && (

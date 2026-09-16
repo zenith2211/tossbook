@@ -313,6 +313,10 @@ export function listResults(limit = 100): ResultRow[] {
     .all(limit) as ResultRow[];
 }
 
+// Default stake limits for a new match's markets (admin can fine-tune per market).
+export const DEFAULT_MIN_STAKE = 100;
+export const DEFAULT_MAX_STAKE = 100_000;
+
 export function createMatch(
   data: {
     title: string;
@@ -323,25 +327,30 @@ export function createMatch(
     endTime?: string | null;
     rateA?: number;
     rateB?: number;
+    imageUrl?: string | null;
+    minStake?: number;
+    maxStake?: number;
   },
   createdBy: number,
 ): Match {
   const rateA = data.rateA && data.rateA > 1 ? round2(data.rateA) : 1.95;
   const rateB = data.rateB && data.rateB > 1 ? round2(data.rateB) : 1.95;
+  const minStake = data.minStake && data.minStake > 0 ? round2(data.minStake) : DEFAULT_MIN_STAKE;
+  const maxStake = data.maxStake && data.maxStake > minStake ? round2(data.maxStake) : DEFAULT_MAX_STAKE;
   const tx = db.transaction(() => {
     const info = db
       .prepare(
-        `INSERT INTO matches (title, team_a, team_b, league, start_time, end_time, status, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, 'upcoming', ?)`,
+        `INSERT INTO matches (title, team_a, team_b, league, start_time, end_time, image_url, status, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'upcoming', ?)`,
       )
-      .run(data.title, data.teamA, data.teamB, data.league, data.startTime, data.endTime ?? null, createdBy);
+      .run(data.title, data.teamA, data.teamB, data.league, data.startTime, data.endTime ?? null, data.imageUrl ?? null, createdBy);
     const matchId = info.lastInsertRowid as number;
     db.prepare(
-      `INSERT INTO markets (match_id, type, name, status, rate_a, rate_b) VALUES (?, 'toss', 'Toss Winner', 'open', ?, ?)`,
-    ).run(matchId, rateA, rateB);
+      `INSERT INTO markets (match_id, type, name, status, rate_a, rate_b, min_stake, max_stake) VALUES (?, 'toss', 'Toss Winner', 'open', ?, ?, ?, ?)`,
+    ).run(matchId, rateA, rateB, minStake, maxStake);
     db.prepare(
-      `INSERT INTO markets (match_id, type, name, status, rate_a, rate_b) VALUES (?, 'match_winner', 'Match Winner', 'open', ?, ?)`,
-    ).run(matchId, rateA, rateB);
+      `INSERT INTO markets (match_id, type, name, status, rate_a, rate_b, min_stake, max_stake) VALUES (?, 'match_winner', 'Match Winner', 'open', ?, ?, ?, ?)`,
+    ).run(matchId, rateA, rateB, minStake, maxStake);
     return matchId;
   });
   return getMatch(tx())!;

@@ -33,6 +33,13 @@ services:
         value: "1000000000"
       - key: NODE_ENV
         value: production
+      # Optional: deliver client deposit/withdraw requests to the admin's Telegram.
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_ADMIN_CHAT_ID
+        sync: false
+      - key: NEXT_PUBLIC_TELEGRAM_ADMIN
+        value: RSTOSSBOOK01
     # disk: # ← uncomment (and use a paid plan) to persist the SQLite database
     #   name: tossbook-data
     #   mountPath: /app/data

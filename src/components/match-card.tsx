@@ -28,6 +28,7 @@ export type MatchDTO = {
   status: "upcoming" | "live" | "closed" | "settled";
   start_time: string;
   end_time: string | null;
+  image_url: string | null;
   markets: MarketDTO[];
 };
 
@@ -94,6 +95,14 @@ export function MatchCard({
 
   return (
     <div className="card-shadow overflow-hidden rounded-2xl border border-line bg-panel">
+      {match.image_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={match.image_url}
+          alt={`${match.title} poster`}
+          className="h-36 w-full border-b border-line object-cover"
+        />
+      ) : null}
       <div className="flex items-center justify-between gap-2 border-b border-line bg-panel-2/70 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span className="text-brand"><IconCricket className="h-4 w-4" /></span>

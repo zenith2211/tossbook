@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import {
   createMatchAction,
   updateMarketAction,
@@ -9,6 +9,60 @@ import {
 import { ActionForm, Modal, SubmitButton } from "./form";
 import { Field, inputCls, labelCls } from "./ui";
 import { IconPlus } from "./icons";
+
+/** Match poster picker: upload an image (stored inline as a data URL) or paste
+ *  an image URL. Whichever is set is submitted in the hidden `imageUrl` field. */
+function PosterPicker() {
+  const [url, setUrl] = useState("");
+  const [dataUrl, setDataUrl] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const value = dataUrl || url.trim();
+
+  function onFile(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return setDataUrl("");
+    if (!f.type.startsWith("image/")) {
+      setErr("Please choose an image file.");
+      e.target.value = "";
+      return;
+    }
+    if (f.size > 1_000_000) {
+      setErr("Image too large — keep it under 1 MB, or paste a URL instead.");
+      e.target.value = "";
+      return;
+    }
+    setErr(null);
+    const reader = new FileReader();
+    reader.onload = () => setDataUrl(String(reader.result || ""));
+    reader.readAsDataURL(f);
+  }
+
+  return (
+    <div>
+      <span className={labelCls}>Match poster (optional)</span>
+      <input type="hidden" name="imageUrl" value={value} />
+      <input
+        type="file"
+        accept="image/*"
+        onChange={onFile}
+        className="block w-full text-xs text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-2"
+      />
+      <div className="my-1.5 text-center text-[11px] text-muted">— or paste an image URL —</div>
+      <input
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        disabled={!!dataUrl}
+        placeholder="https://…/poster.jpg"
+        className={inputCls}
+      />
+      {err ? <p className="mt-1 text-[11px] text-danger">{err}</p> : null}
+      {value ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={value} alt="Poster preview" className="mt-2 h-28 w-full rounded-lg border border-line object-cover" />
+      ) : null}
+    </div>
+  );
+}
 
 export function CreateMatchButton() {
   return (
@@ -45,6 +99,15 @@ export function CreateMatchButton() {
             <input name="league" className={inputCls} placeholder="T20 International" defaultValue="Cricket" />
           </Field>
           <div className="grid grid-cols-2 gap-3">
+            <Field label="Min bet (₹)">
+              <input name="minStake" inputMode="numeric" defaultValue="100" className={inputCls} />
+            </Field>
+            <Field label="Max bet (₹)">
+              <input name="maxStake" inputMode="numeric" defaultValue="100000" className={inputCls} />
+            </Field>
+          </div>
+          <PosterPicker />
+          <div className="grid grid-cols-2 gap-3">
             <Field label="Start time">
               <input name="startTime" type="datetime-local" className={inputCls} />
             </Field>
@@ -53,7 +116,7 @@ export function CreateMatchButton() {
             </Field>
           </div>
           <p className="text-xs text-muted">
-            Odds apply to the Toss &amp; Match markets. You can fine-tune them per market afterwards.
+            Odds &amp; limits apply to the Toss &amp; Match markets. You can fine-tune them per market afterwards.
           </p>
           <SubmitButton className="w-full">Create match</SubmitButton>
         </ActionForm>

@@ -76,6 +76,7 @@ function migrate() {
       league      TEXT NOT NULL DEFAULT 'Cricket',
       start_time  TEXT NOT NULL,
       end_time    TEXT,
+      image_url   TEXT,
       status      TEXT NOT NULL DEFAULT 'upcoming' CHECK (status IN ('upcoming','live','closed','settled')),
       created_by  INTEGER REFERENCES users(id),
       created_at  TEXT NOT NULL DEFAULT (datetime('now'))
@@ -160,6 +161,11 @@ function migrate() {
   // Backfill columns added after a database may already exist.
   try {
     db.exec("ALTER TABLE matches ADD COLUMN end_time TEXT");
+  } catch {
+    /* column already present */
+  }
+  try {
+    db.exec("ALTER TABLE matches ADD COLUMN image_url TEXT");
   } catch {
     /* column already present */
   }

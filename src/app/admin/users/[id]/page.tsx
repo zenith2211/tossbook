@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUser, isAncestorOf } from "@/lib/auth";
-import { getUser, available, listLedger, listBetsForUser } from "@/lib/domain";
+import { getUser, available, listLedger, listBets } from "@/lib/domain";
 import { toggleStatusAction } from "@/lib/actions/admin-actions";
 import { Card, CardHead, Stat, Badge, Empty, PnL } from "@/components/ui";
 import {
@@ -9,7 +9,8 @@ import {
   EditSettingsForm,
   ResetPasswordForm,
 } from "@/components/admin-forms";
-import { coins, signed, pnlClass, fmtDateTime } from "@/lib/format";
+import { LedgerTable } from "@/components/ledger-table";
+import { coins, fmtDateTime } from "@/lib/format";
 import { ROLE_LABEL } from "@/lib/types";
 import { IconBack } from "@/components/icons";
 
@@ -24,8 +25,15 @@ export default async function UserDetail({ params }: { params: Promise<{ id: str
   if (!u || userId === me.id || !isAncestorOf(me.id, userId)) notFound();
 
   const isDirect = u.parent_id === me.id;
-  const ledger = listLedger(u.id, 60);
-  const bets = u.role === "client" ? listBetsForUser(u.id, 60) : [];
+  const ledger = listLedger(u.id, 500);
+  const bets = u.role === "client" ? listBets({ userIds: [u.id] }) : [];
+
+  function betBadge(s: string) {
+    if (s === "open") return <Badge tone="gold">Open</Badge>;
+    if (s === "won") return <Badge tone="brand">Won</Badge>;
+    if (s === "lost") return <Badge tone="lay">Lost</Badge>;
+    return <Badge tone="muted">Cancelled</Badge>;
+  }
 
   return (
     <div className="space-y-5">
@@ -70,64 +78,65 @@ export default async function UserDetail({ params }: { params: Promise<{ id: str
         <Stat label="Exposure" value={coins(u.exposure)} accent={u.exposure > 0 ? "text-lay" : ""} />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card>
-          <CardHead title="Settings" />
-          <EditSettingsForm childId={u.id} defaults={{ name: u.name }} />
-          <div className="border-t border-line">
-            <ResetPasswordForm childId={u.id} />
-          </div>
-        </Card>
+      <Card>
+        <CardHead title="Settings" />
+        <EditSettingsForm childId={u.id} defaults={{ name: u.name }} />
+        <div className="border-t border-line">
+          <ResetPasswordForm childId={u.id} />
+        </div>
+      </Card>
 
-        {u.role === "client" && (
-          <Card>
-            <CardHead title="Recent Bets" right={<Badge tone="muted">{bets.length}</Badge>} />
-            {bets.length === 0 ? (
-              <Empty>No bets placed yet.</Empty>
-            ) : (
-              <ul className="max-h-96 divide-y divide-line overflow-y-auto">
-                {bets.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between px-4 py-2.5">
-                    <div>
-                      <div className="text-sm font-medium">{b.selection_name}</div>
-                      <div className="text-xs text-muted">
-                        {b.market_type === "toss" ? "Toss" : "Match"} · {coins(b.stake)} @ {b.rate.toFixed(2)}
-                      </div>
+      {u.role === "client" && (
+        <Card>
+          <CardHead title="Betting history" sub="Every bet — team, market, time, stake & result" right={<Badge tone="muted">{bets.length}</Badge>} />
+          {bets.length === 0 ? (
+            <Empty>No bets placed yet.</Empty>
+          ) : (
+            <ul className="max-h-[30rem] divide-y divide-line overflow-y-auto">
+              {bets.map((b) => (
+                <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <span className="truncate">{b.selection_name}</span>
+                      {betBadge(b.status)}
                     </div>
+                    <div className="truncate text-xs text-muted">
+                      {b.match_title} · {b.market_type === "toss" ? "Toss" : "Match"} @ {b.rate.toFixed(2)}
+                    </div>
+                    <div className="text-[11px] text-muted">
+                      {fmtDateTime(b.status === "open" ? b.placed_at : b.settled_at ?? b.placed_at)}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold tabular-nums">{coins(b.stake)}</div>
                     {b.status === "open" ? (
-                      <Badge tone="gold">Open</Badge>
+                      <div className="text-xs text-brand">returns {coins(b.stake * b.rate)}</div>
+                    ) : b.status === "void" ? (
+                      <div className="text-xs text-muted">Refunded</div>
                     ) : (
                       <PnL value={b.result_pl} />
                     )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        )}
-      </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
 
-      <Card>
-        <CardHead title="Ledger" sub="All transactions on this account" />
-        {ledger.length === 0 ? (
-          <Empty>No transactions yet.</Empty>
-        ) : (
-          <ul className="max-h-[28rem] divide-y divide-line overflow-y-auto">
-            {ledger.map((r) => (
-              <li key={r.id} className="flex items-center justify-between px-4 py-2.5">
-                <div className="min-w-0">
-                  <div className="text-sm font-medium capitalize">{r.type.replace(/_/g, " ")}</div>
-                  <div className="truncate text-xs text-muted">{r.remark || fmtDateTime(r.created_at)}</div>
-                </div>
-                <div className="text-right">
-                  <div className={`text-sm font-bold tabular-nums ${pnlClass(r.amount)}`}>{signed(r.amount)}</div>
-                  <div className="text-xs text-muted">Bal {coins(r.balance_after)}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <div>
+        <h2 className="mb-2 text-sm font-bold text-ink">Passbook</h2>
+        <LedgerTable
+          rows={ledger.map((r) => ({
+            id: r.id,
+            type: r.type,
+            amount: r.amount,
+            balance_after: r.balance_after,
+            remark: r.remark,
+            created_at: r.created_at,
+          }))}
+        />
+      </div>
     </div>
   );
 }

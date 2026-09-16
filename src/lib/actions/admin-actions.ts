@@ -31,13 +31,14 @@ export async function createUserAction(_prev: ActionResult, formData: FormData):
   if (!childRole) return FAIL("Your role cannot create sub-accounts.");
 
   const username = String(formData.get("username") ?? "").trim();
-  const name = String(formData.get("name") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  // Display name was removed from the form — default it to the username.
+  const name = String(formData.get("name") ?? "").trim() || username;
+  // Password defaults to a shared starter password when left blank.
+  const password = String(formData.get("password") ?? "") || "Abcd123";
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
     return FAIL("Username must be 3–20 chars (letters, numbers, underscore).");
   }
   if (password.length < 6) return FAIL("Password must be at least 6 characters.");
-  if (!name) return FAIL("Enter a display name.");
 
   try {
     createDownlineUser(
@@ -144,8 +145,22 @@ export async function createMatchAction(_prev: ActionResult, formData: FormData)
   if (endIso && new Date(endIso).getTime() <= new Date(iso).getTime()) {
     return FAIL("Betting close time must be after the start time.");
   }
+
+  // Optional match poster — either a pasted URL or an uploaded image sent as a
+  // data URL. Cap the size so a huge upload can't bloat the row / page payload.
+  const imageUrl = String(formData.get("imageUrl") ?? "").trim() || null;
+  if (imageUrl && imageUrl.length > 1_500_000) {
+    return FAIL("Poster image is too large — use an image under ~1 MB or paste a URL.");
+  }
+
+  const minStake = Math.max(1, num(formData.get("minStake"), 100));
+  const maxStake = Math.max(minStake, num(formData.get("maxStake"), 100000));
+
   try {
-    createMatch({ title: `${teamA} vs ${teamB}`, teamA, teamB, league, startTime: iso, endTime: endIso, rateA, rateB }, me.id);
+    createMatch(
+      { title: `${teamA} vs ${teamB}`, teamA, teamB, league, startTime: iso, endTime: endIso, rateA, rateB, imageUrl, minStake, maxStake },
+      me.id,
+    );
     revalidatePath("/admin/matches");
     revalidatePath("/play");
     return OK("Match created with Toss & Match Winner markets.");

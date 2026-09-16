@@ -44,6 +44,7 @@ export interface Match {
   league: string;
   start_time: string;
   end_time: string | null;
+  image_url: string | null;
   status: "upcoming" | "live" | "closed" | "settled";
   created_by: number | null;
   created_at: string;

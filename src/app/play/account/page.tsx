@@ -42,15 +42,11 @@ export default async function Account() {
       <Card>
         <div className="divide-y divide-line">
           <Link href="/play/statement" className="flex items-center justify-between px-4 py-3 text-sm hover:bg-ink/5">
-            <span>Full Statement</span>
+            <span>Passbook</span>
             <span className="text-muted">›</span>
           </Link>
           <Link href="/play/rules" className="flex items-center justify-between px-4 py-3 text-sm hover:bg-ink/5">
             <span>Rules &amp; Guidelines</span>
-            <span className="text-muted">›</span>
-          </Link>
-          <Link href="/play/results" className="flex items-center justify-between px-4 py-3 text-sm hover:bg-ink/5">
-            <span>Match Results</span>
             <span className="text-muted">›</span>
           </Link>
         </div>

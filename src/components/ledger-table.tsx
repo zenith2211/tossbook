@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card, CardHead, Empty } from "./ui";
-import { coins, signed, pnlClass, fmtDateTime } from "@/lib/format";
+import { coins, signed, pnlClass, fmtDateTime, round2 } from "@/lib/format";
 
 export type LedgerRow = {
   id: number;
@@ -50,7 +50,7 @@ export function LedgerTable({ rows }: { rows: LedgerRow[] }) {
 
   function exportCsv() {
     const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
-    const lines = [["Date", "Type", "Description", "Amount", "Balance After"].map(esc).join(",")];
+    const lines = [["Date", "Type", "Description", "Amount", "Balance Before", "Balance After"].map(esc).join(",")];
     for (const r of rows) {
       lines.push(
         [
@@ -58,6 +58,7 @@ export function LedgerTable({ rows }: { rows: LedgerRow[] }) {
           esc(label(r.type)),
           esc(r.remark || ""),
           esc(String(r.amount)),
+          esc(String(round2(r.balance_after - r.amount))),
           esc(String(r.balance_after)),
         ].join(","),
       );
@@ -121,7 +122,9 @@ export function LedgerTable({ rows }: { rows: LedgerRow[] }) {
                 </div>
                 <div className="ml-3 text-right">
                   <div className={`text-sm font-bold tabular-nums ${pnlClass(r.amount)}`}>{signed(r.amount)}</div>
-                  <div className="text-xs text-muted">Bal {coins(r.balance_after)}</div>
+                  <div className="text-xs text-muted tabular-nums">
+                    {coins(round2(r.balance_after - r.amount))} → {coins(r.balance_after)}
+                  </div>
                 </div>
               </li>
             ))}

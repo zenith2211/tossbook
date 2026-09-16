@@ -12,7 +12,10 @@ export default async function Statement() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-lg font-bold">Account Statement</h1>
+      <div>
+        <h1 className="text-lg font-bold">Passbook</h1>
+        <p className="text-sm text-muted">Every activity — deposits, withdrawals, bets won &amp; lost.</p>
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <Stat label="Balance" value={coins(me.balance)} accent="text-gold" />

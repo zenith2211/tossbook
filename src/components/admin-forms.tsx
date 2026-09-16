@@ -26,16 +26,11 @@ export function CreateAccountButton({ childRoleLabel }: { childRoleLabel: string
     >
       {(close) => (
         <ActionForm action={createUserAction} resetOnSuccess onSuccess={() => setTimeout(close, 700)} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Username">
-              <input name="username" autoCapitalize="none" spellCheck={false} className={inputCls} placeholder="john123" />
-            </Field>
-            <Field label="Display name">
-              <input name="name" className={inputCls} placeholder="John" />
-            </Field>
-          </div>
-          <Field label="Password" hint="Min 6 characters.">
-            <input name="password" type="text" className={inputCls} placeholder="Set a login password" />
+          <Field label="Username" hint="Letters, numbers, underscore (3–20).">
+            <input name="username" autoCapitalize="none" spellCheck={false} className={inputCls} placeholder="john123" />
+          </Field>
+          <Field label="Password" hint="Default is Abcd123 — the client can change it later.">
+            <input name="password" type="text" defaultValue="Abcd123" className={inputCls} placeholder="Abcd123" />
           </Field>
           <Field label="Opening balance (₹)" hint="Moved from your balance.">
             <input name="openingBalance" inputMode="numeric" defaultValue="0" className={inputCls} />
