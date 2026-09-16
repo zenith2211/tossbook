@@ -435,6 +435,43 @@ export function placeBet(
   return db.prepare("SELECT * FROM bets WHERE id = ?").get(tx()) as Bet;
 }
 
+export function cancelBet(userId: number, betId: number): Bet {
+  const user = getUser(userId);
+  if (!user) throw new Error("Account not found.");
+
+  const bet = db.prepare("SELECT * FROM bets WHERE id = ?").get(betId) as Bet | undefined;
+  if (!bet) throw new Error("Bet not found.");
+  if (bet.user_id !== userId) throw new Error("This bet is not on your account.");
+  if (bet.status !== "open") throw new Error("Only open bets can be cancelled.");
+
+  const market = getMarket(bet.market_id);
+  if (!market || market.status === "settled") throw new Error("This market is already settled.");
+
+  const match = getMatch(bet.match_id);
+  if (match) {
+    if (match.status === "settled" || match.status === "closed") {
+      throw new Error("This match is closed — the bet can no longer be cancelled.");
+    }
+    if (match.end_time && new Date(match.end_time).getTime() <= Date.now()) {
+      throw new Error("Betting is closed — this bet can no longer be cancelled.");
+    }
+  }
+
+  const tx = db.transaction(() => {
+    // The stake was only held as exposure (never debited from balance), so
+    // cancelling simply releases that hold. The bet is voided and then shows
+    // under the client's "Cancelled" filter.
+    const releasedExposure = round2(Math.max(0, user.exposure - bet.stake));
+    db.prepare("UPDATE users SET exposure = ? WHERE id = ?").run(releasedExposure, user.id);
+    db.prepare(
+      "UPDATE bets SET status = 'void', result_pl = 0, settled_at = datetime('now') WHERE id = ?",
+    ).run(bet.id);
+  });
+  tx();
+
+  return db.prepare("SELECT * FROM bets WHERE id = ?").get(bet.id) as Bet;
+}
+
 export function listBetsForUser(userId: number, limit = 200): Bet[] {
   return db
     .prepare("SELECT * FROM bets WHERE user_id = ? ORDER BY id DESC LIMIT ?")

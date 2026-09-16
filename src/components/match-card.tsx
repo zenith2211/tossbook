@@ -32,6 +32,17 @@ export type MatchDTO = {
 };
 
 const QUICK = [100, 500, 1000, 5000, 25000];
+const PCTS = [10, 50, 100];
+
+/** Format a millisecond duration as HH:MM:SS (clamped at zero). */
+function fmtCountdown(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
 
 export function MatchCard({
   match,
@@ -45,23 +56,34 @@ export function MatchCard({
   const [sel, setSel] = useState<{ marketId: number; selection: "A" | "B"; rate: number; label: string } | null>(null);
   const [stake, setStake] = useState<string>("");
   const [now, setNow] = useState<number | null>(null);
+  const [placed, setPlaced] = useState<{ label: string; rate: number; stake: number } | null>(null);
   const [state, formAction] = useActionState(placeBetAction, { ok: false });
 
   useEffect(() => {
     if (state.ok) {
+      // Snapshot the just-placed pick for the confirmation modal before clearing.
+      if (sel && Number(stake.replace(/,/g, "")) > 0) {
+        setPlaced({ label: sel.label, rate: sel.rate, stake: Number(stake.replace(/,/g, "")) });
+      }
       setSel(null);
       setStake("");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  // Live betting-cutoff check (starts null so server & first client render match).
+  // Live clock — starts null so the server and first client render agree, then
+  // ticks every second to drive the closing countdown.
   useEffect(() => {
     setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 15000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
   const bettingClosed =
     match.end_time != null && now != null && now >= new Date(match.end_time).getTime();
+  const countdown =
+    match.end_time != null && now != null && !bettingClosed
+      ? fmtCountdown(new Date(match.end_time).getTime() - now)
+      : null;
 
   useEffect(() => {
     if (bettingClosed) setSel(null);
@@ -79,7 +101,10 @@ export function MatchCard({
         </div>
         <div className="flex items-center gap-2">
           {match.end_time && !bettingClosed ? (
-            <span className="text-[11px] font-semibold text-muted">Closes {fmtTime(match.end_time)}</span>
+            <span className="inline-flex items-center gap-1 rounded-md border border-line bg-panel px-2 py-0.5 text-[11px] font-bold tabular-nums text-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              {countdown != null ? countdown : `Closes ${fmtTime(match.end_time)}`}
+            </span>
           ) : null}
           {bettingClosed ? (
             <Badge tone="danger">Betting closed</Badge>
@@ -192,6 +217,20 @@ export function MatchCard({
               Clear
             </button>
           </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Balance</span>
+            {PCTS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                disabled={available <= 0}
+                onClick={() => setStake(String(Math.floor((available * p) / 100)))}
+                className="rounded-md border border-brand/30 bg-brand/5 px-2.5 py-1 text-xs font-bold text-brand transition hover:bg-brand/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {p === 100 ? "Max" : `${p}%`}
+              </button>
+            ))}
+          </div>
           <div className="mt-2 flex items-center justify-between text-xs">
             <span className="text-muted">
               Returns: <span className="font-bold text-brand">{coins(round2(stakeNum * sel.rate))}</span>
@@ -208,6 +247,55 @@ export function MatchCard({
       ) : state.ok && state.message ? (
         <div className="border-t border-line px-4 py-2">
           <Banner state={state} />
+        </div>
+      ) : null}
+
+      {placed ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-sm"
+          onClick={() => setPlaced(null)}
+        >
+          <div
+            className="card-shadow w-full max-w-sm rounded-2xl border border-line bg-panel p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-brand/10 text-3xl">🎉</div>
+            <h3 className="text-center text-lg font-extrabold text-ink">Pick Placed!</h3>
+            <p className="mb-4 text-center text-xs text-muted">{placed.label}</p>
+            <div className="space-y-2 rounded-xl border border-line bg-panel-2 p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted">Stake</span>
+                <span className="font-bold tabular-nums text-ink">{coins(placed.stake)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted">Odds</span>
+                <span className="font-bold tabular-nums text-ink">{placed.rate.toFixed(2)}×</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted">Potential win</span>
+                <span className="font-extrabold tabular-nums text-brand">{coins(round2(placed.stake * placed.rate))}</span>
+              </div>
+            </div>
+            <p className="mt-3 text-center text-[11px] text-muted">
+              Results settle after the toss. Check <b>My Bets</b> for updates.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPlaced(null)}
+                className="rounded-xl border border-line px-3 py-2.5 text-sm font-semibold text-ink/80 transition hover:border-brand/40"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => setPlaced(null)}
+                className="rounded-xl bg-brand px-3 py-2.5 text-sm font-bold text-white transition hover:bg-brand-2"
+              >
+                Bet more
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card, Badge, Empty, PnL, Stat } from "./ui";
+import { CancelBetButton } from "./cancel-bet-button";
 import { coins, fmtDateTime } from "@/lib/format";
 
 export type BetItem = {
@@ -114,6 +115,9 @@ export function BetsList({ bets }: { bets: BetItem[] }) {
                     <>
                       <div className="text-sm font-bold tabular-nums">{coins(b.stake)}</div>
                       <div className="text-xs text-brand">returns {coins(b.stake * b.rate)}</div>
+                      <div className="mt-1.5">
+                        <CancelBetButton betId={b.id} />
+                      </div>
                     </>
                   ) : b.status === "void" ? (
                     <div className="text-sm text-muted">Returned {coins(b.stake)}</div>
