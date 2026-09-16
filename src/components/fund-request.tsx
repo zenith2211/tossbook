@@ -9,9 +9,11 @@ import { IconCash } from "./icons";
 
 const ADMIN_TG = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "RSTOSSBOOK01";
 
-function telegramShareUrl(text: string): string {
-  // Opens Telegram with the message prefilled; the user picks the admin chat.
-  return `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${ADMIN_TG}`)}&text=${encodeURIComponent(text)}`;
+// Direct link to the admin's Telegram chat. Telegram can't pre-fill the message
+// when opening a person's chat, so we copy the request text to the clipboard and
+// the user just pastes it in the chat that opens.
+function adminChatUrl(): string {
+  return `https://t.me/${ADMIN_TG}`;
 }
 
 const QUICK = [500, 1000, 5000, 10000];
@@ -43,13 +45,22 @@ function FundForm({
       const label = isWithdraw ? "Withdrawal" : "Refill / Deposit";
       if (r.message !== "auto") {
         const text = `${label} request\nUser: @${username}\nAmount: ₹${amt.toLocaleString("en-IN")}`;
-        window.open(telegramShareUrl(text), "_blank");
+        // Copy the request so the user can paste it into the chat that opens.
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          /* clipboard may be unavailable; the chat still opens */
+        }
+        window.open(adminChatUrl(), "_blank");
       }
       setMsg({
         ok: true,
-        text: r.message === "auto" ? "Request sent to admin on Telegram ✓" : "Opening Telegram to send your request…",
+        text:
+          r.message === "auto"
+            ? "Request sent to admin on Telegram ✓"
+            : "Opened @" + ADMIN_TG + " — request copied, just paste & send.",
       });
-      setTimeout(close, 1600);
+      setTimeout(close, 2200);
     });
   }
 
