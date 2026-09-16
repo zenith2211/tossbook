@@ -185,12 +185,18 @@ function seed() {
     );
   }
 
+  // INSERT OR IGNORE keeps this race-safe: if another process/connection has
+  // already created the admin (same UNIQUE username), the insert is skipped
+  // instead of throwing a UNIQUE-constraint error.
   db.prepare(
-    `INSERT INTO users (username, password, name, role, parent_id, balance, share_pct, commission_pct)
+    `INSERT OR IGNORE INTO users (username, password, name, role, parent_id, balance, share_pct, commission_pct)
      VALUES (?, ?, 'Administrator', 'admin', NULL, ?, 0, 0)`,
   ).run(adminUser, hashPassword(adminPass), Number.isFinite(adminFloat) ? adminFloat : 1_000_000_000);
 }
 
-// Initialise on module load.
+// Initialise on module load. Tables are always ensured (CREATE TABLE IF NOT
+// EXISTS is idempotent), but seeding is skipped during `next build`: there,
+// route modules are imported in parallel workers only to read their config,
+// and concurrent seed() calls would otherwise race on the empty users table.
 migrate();
-seed();
+if (process.env.NEXT_PHASE !== "phase-production-build") seed();
