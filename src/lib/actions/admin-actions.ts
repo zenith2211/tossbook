@@ -1,0 +1,208 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { getSessionUser, isUpline, isAncestorOf } from "@/lib/auth";
+import { CHILD_ROLE } from "@/lib/types";
+import {
+  createDownlineUser,
+  transferChips,
+  setUserStatus,
+  updateUserSettings,
+  setPassword,
+  getUser,
+  createMatch,
+  updateMarket,
+  settleMarket,
+  setMatchStatus,
+  getMarket,
+} from "@/lib/domain";
+import { type ActionResult, OK, FAIL } from "@/lib/action-result";
+
+function num(v: FormDataEntryValue | null, fallback = 0): number {
+  const n = Number(String(v ?? "").replace(/,/g, ""));
+  return Number.isFinite(n) ? n : fallback;
+}
+
+// --- Accounts -------------------------------------------------------------
+export async function createUserAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me || !isUpline(me.role)) return FAIL("Not authorised.");
+  const childRole = CHILD_ROLE[me.role];
+  if (!childRole) return FAIL("Your role cannot create sub-accounts.");
+
+  const username = String(formData.get("username") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+    return FAIL("Username must be 3–20 chars (letters, numbers, underscore).");
+  }
+  if (password.length < 6) return FAIL("Password must be at least 6 characters.");
+  if (!name) return FAIL("Enter a display name.");
+
+  try {
+    createDownlineUser(
+      {
+        username,
+        name,
+        password,
+        role: childRole,
+        parentId: me.id,
+        openingBalance: Math.max(0, num(formData.get("openingBalance"))),
+        sharePct: Math.min(100, Math.max(0, num(formData.get("sharePct")))),
+        commissionPct: Math.min(100, Math.max(0, num(formData.get("commissionPct")))),
+        creditLimit: Math.max(0, num(formData.get("creditLimit"))),
+      },
+      me.id,
+    );
+    revalidatePath("/admin/users");
+    revalidatePath("/admin");
+    return OK(`Account "${username}" created.`);
+  } catch (e) {
+    return FAIL(e instanceof Error ? e.message : "Could not create account.");
+  }
+}
+
+export async function transferAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me || !isUpline(me.role)) return FAIL("Not authorised.");
+  const childId = num(formData.get("childId"));
+  const child = getUser(childId);
+  if (!child || child.parent_id !== me.id) return FAIL("You can only settle funds with your direct downline.");
+  const amount = num(formData.get("amount"));
+  const direction = String(formData.get("direction") ?? "deposit") === "withdraw" ? "withdraw" : "deposit";
+  const remark = String(formData.get("remark") ?? "").trim();
+
+  try {
+    transferChips(me.id, childId, amount, direction, me.id, remark);
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${childId}`);
+    revalidatePath("/admin");
+    return OK(direction === "deposit" ? "Deposit successful." : "Withdrawal successful.");
+  } catch (e) {
+    return FAIL(e instanceof Error ? e.message : "Transfer failed.");
+  }
+}
+
+export async function toggleStatusAction(formData: FormData): Promise<void> {
+  const me = await getSessionUser();
+  if (!me || !isUpline(me.role)) return;
+  const childId = num(formData.get("childId"));
+  if (!isAncestorOf(me.id, childId) || childId === me.id) return;
+  const child = getUser(childId);
+  if (!child) return;
+  setUserStatus(childId, child.status === "active" ? "locked" : "active");
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${childId}`);
+}
+
+export async function updateSettingsAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me || !isUpline(me.role)) return FAIL("Not authorised.");
+  const childId = num(formData.get("childId"));
+  if (!isAncestorOf(me.id, childId) || childId === me.id) return FAIL("Not authorised for this account.");
+  try {
+    updateUserSettings(childId, {
+      name: String(formData.get("name") ?? "").trim() || undefined,
+      sharePct: Math.min(100, Math.max(0, num(formData.get("sharePct")))),
+      commissionPct: Math.min(100, Math.max(0, num(formData.get("commissionPct")))),
+      creditLimit: Math.max(0, num(formData.get("creditLimit"))),
+    });
+    revalidatePath(`/admin/users/${childId}`);
+    return OK("Settings saved.");
+  } catch (e) {
+    return FAIL(e instanceof Error ? e.message : "Could not save.");
+  }
+}
+
+export async function resetPasswordAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me || !isUpline(me.role)) return FAIL("Not authorised.");
+  const childId = num(formData.get("childId"));
+  if (!isAncestorOf(me.id, childId) || childId === me.id) return FAIL("Not authorised for this account.");
+  const pw = String(formData.get("password") ?? "");
+  if (pw.length < 6) return FAIL("Password must be at least 6 characters.");
+  setPassword(childId, pw);
+  revalidatePath(`/admin/users/${childId}`);
+  return OK("Password reset.");
+}
+
+// --- Matches & markets (admin only) --------------------------------------
+export async function createMatchAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me || me.role !== "admin") return FAIL("Only admin can create matches.");
+  const teamA = String(formData.get("teamA") ?? "").trim();
+  const teamB = String(formData.get("teamB") ?? "").trim();
+  const league = String(formData.get("league") ?? "Cricket").trim() || "Cricket";
+  const startTime = String(formData.get("startTime") ?? "").trim();
+  if (!teamA || !teamB) return FAIL("Enter both team names.");
+  const rateA = num(formData.get("rateA"), 1.95);
+  const rateB = num(formData.get("rateB"), 1.95);
+  if (rateA <= 1 || rateB <= 1) return FAIL("Odds must be greater than 1.00 (e.g. 1.95, 2.50).");
+  const iso = startTime ? new Date(startTime).toISOString() : new Date().toISOString();
+  const endTime = String(formData.get("endTime") ?? "").trim();
+  const endIso = endTime ? new Date(endTime).toISOString() : null;
+  if (endIso && new Date(endIso).getTime() <= new Date(iso).getTime()) {
+    return FAIL("Betting close time must be after the start time.");
+  }
+  try {
+    createMatch({ title: `${teamA} vs ${teamB}`, teamA, teamB, league, startTime: iso, endTime: endIso, rateA, rateB }, me.id);
+    revalidatePath("/admin/matches");
+    revalidatePath("/play");
+    return OK("Match created with Toss & Match Winner markets.");
+  } catch (e) {
+    return FAIL(e instanceof Error ? e.message : "Could not create match.");
+  }
+}
+
+export async function updateMarketAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me || me.role !== "admin") return FAIL("Only admin can edit markets.");
+  const marketId = num(formData.get("marketId"));
+  const market = getMarket(marketId);
+  if (!market) return FAIL("Market not found.");
+  try {
+    updateMarket(marketId, {
+      rateA: num(formData.get("rateA"), market.rate_a),
+      rateB: num(formData.get("rateB"), market.rate_b),
+      status: (String(formData.get("status") ?? market.status) as typeof market.status) || market.status,
+      minStake: num(formData.get("minStake"), market.min_stake),
+      maxStake: num(formData.get("maxStake"), market.max_stake),
+    });
+    revalidatePath(`/admin/matches/${market.match_id}`);
+    revalidatePath("/play");
+    return OK("Market updated.");
+  } catch (e) {
+    return FAIL(e instanceof Error ? e.message : "Could not update market.");
+  }
+}
+
+export async function settleMarketAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me || me.role !== "admin") return FAIL("Only admin can declare results.");
+  const marketId = num(formData.get("marketId"));
+  const result = String(formData.get("result") ?? "");
+  if (!["A", "B", "void"].includes(result)) return FAIL("Choose a valid result.");
+  try {
+    const out = settleMarket(marketId, result as "A" | "B" | "void", me.id);
+    const market = getMarket(marketId);
+    if (market) revalidatePath(`/admin/matches/${market.match_id}`);
+    revalidatePath("/admin/matches");
+    revalidatePath("/admin");
+    revalidatePath("/play");
+    return OK(`Settled ${out.settledBets} bet(s): ${out.winners} won, ${out.losers} lost.`);
+  } catch (e) {
+    return FAIL(e instanceof Error ? e.message : "Could not settle market.");
+  }
+}
+
+export async function setMatchStatusAction(formData: FormData): Promise<void> {
+  const me = await getSessionUser();
+  if (!me || me.role !== "admin") return;
+  const matchId = num(formData.get("matchId"));
+  const status = String(formData.get("status") ?? "");
+  if (!["upcoming", "live", "closed", "settled"].includes(status)) return;
+  setMatchStatus(matchId, status as "upcoming" | "live" | "closed" | "settled");
+  revalidatePath("/admin/matches");
+  revalidatePath(`/admin/matches/${matchId}`);
+  revalidatePath("/play");
+}
