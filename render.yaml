@@ -40,6 +40,19 @@ services:
         sync: false
       - key: NEXT_PUBLIC_TELEGRAM_ADMIN
         value: RSTOSSBOOK01
+      # Litestream: continuously back the SQLite DB up to S3-compatible storage
+      # so data survives redeploys on the free (diskless) plan. Set these to
+      # enable (B2 / R2 / S3). Leave unset to run without backup.
+      - key: LITESTREAM_BUCKET
+        sync: false
+      - key: LITESTREAM_ENDPOINT
+        sync: false
+      - key: LITESTREAM_REGION
+        sync: false
+      - key: LITESTREAM_ACCESS_KEY_ID
+        sync: false
+      - key: LITESTREAM_SECRET_ACCESS_KEY
+        sync: false
     # disk: # ← uncomment (and use a paid plan) to persist the SQLite database
     #   name: tossbook-data
     #   mountPath: /app/data

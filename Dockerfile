@@ -22,12 +22,20 @@ FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+
+# ca-certificates for TLS to S3-compatible storage; Litestream for continuous
+# SQLite backup/restore (keeps data across redeploys without a persistent disk).
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+ADD https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.tar.gz /tmp/litestream.tar.gz
+RUN tar -C /usr/local/bin -xzf /tmp/litestream.tar.gz && rm /tmp/litestream.tar.gz
+
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
-RUN mkdir -p /app/data
-# The SQLite database lives here — mount a volume so it persists across restarts.
-VOLUME ["/app/data"]
+COPY litestream.yml /etc/litestream.yml
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh && mkdir -p /app/data
 EXPOSE 3000
-CMD ["npm", "start"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
