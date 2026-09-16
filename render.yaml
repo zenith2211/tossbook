@@ -1,17 +1,26 @@
-# Render blueprint — deploy Toss Book as a Docker web service with a
-# persistent disk for the SQLite database.
+# Render blueprint — deploy Toss Book as a Docker web service.
 #
 # Usage: push this repo to GitHub, then in Render: New → Blueprint → pick the repo.
 # Set ADMIN_USERNAME / ADMIN_PASSWORD in the dashboard before the first deploy.
 #
-# NOTE: a persistent disk requires a paid instance type (Starter or higher).
-#       The free tier has ephemeral storage and will lose the database.
+# ── Data persistence ───────────────────────────────────────────────────────
+# This app stores everything in a SQLite file at /app/data/tossbook.db.
+# The service below runs on the FREE plan, which has EPHEMERAL storage: the
+# database is wiped whenever the instance restarts, redeploys, or spins down
+# after inactivity. On each fresh start the app re-seeds a single admin from
+# ADMIN_USERNAME / ADMIN_PASSWORD, so you can always log back in — but clients,
+# matches and bets created at runtime do NOT survive a restart.
+#
+# To keep data permanently, switch to a paid plan and attach a persistent disk:
+#   1. change `plan: free` to `plan: starter` (or higher), and
+#   2. uncomment the `disk:` block at the bottom.
+# A persistent disk requires a paid instance type.
 
 services:
   - type: web
     name: tossbook
     runtime: docker
-    plan: starter
+    plan: free
     region: singapore # pick the region closest to your users
     healthCheckPath: /login
     autoDeploy: true
@@ -24,7 +33,7 @@ services:
         value: "1000000000"
       - key: NODE_ENV
         value: production
-    disk:
-      name: tossbook-data
-      mountPath: /app/data
-      sizeGB: 1
+    # disk: # ← uncomment (and use a paid plan) to persist the SQLite database
+    #   name: tossbook-data
+    #   mountPath: /app/data
+    #   sizeGB: 1
