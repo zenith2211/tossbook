@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createUserAction, deleteUserAction, resetPasswordAction } from "@/lib/actions/admin-actions";
 import { useAction } from "./use-action";
 import { btnCls, fieldCls, IconTile, selectCls, selectStyle } from "./kit";
+import { DEFAULT_CLIENT_PASSWORD } from "@/lib/defaults";
 import { IconCheck, IconKey, IconTrash, IconUserPlus, IconUsers } from "@/components/icons";
 
 export interface ManagedUser {
@@ -52,7 +53,7 @@ function CreateUser() {
       tone="green"
       icon={<IconUserPlus className="h-4 w-4" />}
       title="Create User"
-      hint="A secure default password is set automatically."
+      hint={`Default password ${DEFAULT_CLIENT_PASSWORD} is set automatically.`}
     >
       <input
         value={username}
@@ -82,7 +83,7 @@ function CreateUser() {
       {credentials ? (
         <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
           <p className="flex items-center gap-1.5 text-[12px] font-bold text-emerald-600">
-            <IconCheck className="h-3.5 w-3.5" /> Account created — share these once
+            <IconCheck className="h-3.5 w-3.5" /> Account created — share these with the client
           </p>
           <dl className="mt-2 space-y-1 text-[13px]">
             <div className="flex justify-between gap-3">

@@ -27,7 +27,7 @@ import {
   tossMarket,
 } from "@/lib/domain";
 import { type ActionResult, OK, FAIL } from "@/lib/action-result";
-import { randomBytes } from "node:crypto";
+import { DEFAULT_CLIENT_PASSWORD } from "@/lib/defaults";
 
 function num(v: FormDataEntryValue | null, fallback = 0): number {
   const n = Number(String(v ?? "").replace(/,/g, ""));
@@ -41,13 +41,6 @@ function refreshAdmin(...extra: string[]) {
   }
 }
 
-/**
- * Starter password handed out with a new account. Readable enough to pass on
- * over chat, random enough not to be guessable from the username.
- */
-function generatePassword(): string {
-  return `Ts${randomBytes(3).toString("hex").toUpperCase()}${randomBytes(2).toString("hex")}`;
-}
 
 // --- Accounts -------------------------------------------------------------
 export async function createUserAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
@@ -59,9 +52,9 @@ export async function createUserAction(_prev: ActionResult, formData: FormData):
   const username = String(formData.get("username") ?? "").trim();
   // Display name was removed from the form — default it to the username.
   const name = String(formData.get("name") ?? "").trim() || username;
-  // The form only asks for a username: a secure starter password is generated
+  // The form only asks for a username — the shared starter password is applied
   // here and handed back in the success message for the admin to pass on.
-  const password = String(formData.get("password") ?? "") || generatePassword();
+  const password = String(formData.get("password") ?? "") || DEFAULT_CLIENT_PASSWORD;
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
     return FAIL("Username must be 3–20 chars (letters, numbers, underscore).");
   }
