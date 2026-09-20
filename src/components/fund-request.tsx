@@ -79,7 +79,7 @@ function FundForm({
           value={amount}
           onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
           placeholder="0"
-          className="w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-lg font-bold text-ink outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20"
+          className="w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-lg font-bold text-ink outline-none focus:border-brand focus:bg-panel focus:ring-2 focus:ring-brand/20"
         />
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -138,7 +138,7 @@ export function FundRequest({ username, available }: { username: string; availab
         trigger={(open) => (
           <button
             onClick={open}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-3 py-2.5 text-sm font-bold text-white shadow-sm shadow-brand/30 transition hover:bg-brand-2"
+            className="glow-brand inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand to-brand-2 px-3 py-2.5 text-sm font-bold text-white transition hover:brightness-110"
           >
             <IconCash className="h-4 w-4" /> Deposit
           </button>

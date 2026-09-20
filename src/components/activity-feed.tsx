@@ -165,7 +165,7 @@ export function ActivityFeed({ rows }: { rows: ActivityRow[] }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search team, tournament or type…"
-        className="w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-ink outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20"
+        className="w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-ink outline-none focus:border-brand focus:bg-panel focus:ring-2 focus:ring-brand/20"
       />
 
       <div className="flex flex-wrap gap-1.5">

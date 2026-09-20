@@ -10,7 +10,7 @@ export function BottomNav({ items, allWidths = false }: { items: NavItem[]; allW
   const path = usePathname();
   return (
     <nav
-      className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-panel/95 shadow-[0_-4px_20px_rgba(15,32,39,0.06)] backdrop-blur ${allWidths ? "" : "md:hidden"}`}
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-panel/90 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl ${allWidths ? "" : "md:hidden"}`}
     >
       <div className="mx-auto flex max-w-2xl items-stretch">
         {items.map((it) => {
@@ -19,11 +19,12 @@ export function BottomNav({ items, allWidths = false }: { items: NavItem[]; allW
             <Link
               key={it.href}
               href={it.href}
-              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition ${
+              className={`relative flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold transition ${
                 active ? "text-brand" : "text-muted hover:text-ink/80"
               }`}
             >
-              <span className={active ? "scale-110 transition" : "transition"}>{it.icon}</span>
+              {active ? <span className="absolute top-0 h-0.5 w-10 rounded-full bg-brand shadow-[0_0_10px_rgba(23,201,180,0.7)]" /> : null}
+              <span className={active ? "scale-110 drop-shadow-[0_0_8px_rgba(23,201,180,0.5)] transition" : "transition"}>{it.icon}</span>
               {it.label}
             </Link>
           );

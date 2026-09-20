@@ -24,7 +24,7 @@ export default async function PlayLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="mx-auto min-h-dvh max-w-2xl pb-20">
-      <header className="sticky top-0 z-30 border-b border-line bg-panel/80 px-4 py-2.5 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/70 px-4 py-2.5 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Logo size="sm" />
@@ -33,14 +33,14 @@ export default async function PlayLayout({ children }: { children: React.ReactNo
             </Link>
           </div>
           <div className="flex items-center gap-2">
-            <div className="rounded-lg border border-line bg-panel-2 px-3 py-1.5 text-right">
+            <div className="rounded-xl border border-brand/25 bg-arena px-3 py-1.5 text-right">
               <div className="text-[9px] uppercase tracking-wider text-muted">Balance</div>
-              <div className="text-sm font-bold tabular-nums text-gold">{coins(avail)}</div>
+              <div className="text-sm font-black tabular-nums text-gold">{coins(avail)}</div>
             </div>
             {me.exposure > 0 ? (
-              <div className="rounded-lg border border-lay/30 bg-lay/10 px-3 py-1.5 text-right">
+              <div className="rounded-xl border border-lay/30 bg-lay/10 px-3 py-1.5 text-right">
                 <div className="text-[9px] uppercase tracking-wider text-lay/80">Exposure</div>
-                <div className="text-sm font-bold tabular-nums text-lay">{coins(me.exposure)}</div>
+                <div className="text-sm font-black tabular-nums text-lay">{coins(me.exposure)}</div>
               </div>
             ) : null}
           </div>

@@ -1,34 +1,36 @@
 @import "tailwindcss";
 
-/* Light "gaming arena" theme — teal primary on soft slate, matching a
-   bright cricket-book aesthetic. Variable NAMES are kept stable so existing
-   utility classes (bg-panel, border-line, text-muted, …) cascade. */
+/* Dark "gaming arena" theme — deep charcoal-navy with a vibrant teal primary and
+   purple accent, subtle ambient glow. Variable NAMES are kept stable so every
+   existing utility class (bg-panel, border-line, text-muted, …) cascades. */
 @theme {
-  --color-ink: #0f2027;        /* darkest ink — used for text & on-teal contrast */
-  --color-surface: #eef3f4;    /* app background */
-  --color-panel: #ffffff;      /* cards */
-  --color-panel-2: #f2f6f7;    /* subtle panels / inputs */
-  --color-line: #dbe4e6;       /* borders */
-  --color-muted: #5c7079;      /* muted text */
-  --color-brand: #0e9384;      /* teal primary */
-  --color-brand-2: #0b7d70;    /* teal deep */
-  --color-back: #2563eb;       /* odds / back */
-  --color-lay: #e0457b;        /* lay / danger accent */
-  --color-gold: #b7791f;       /* balance amber */
-  --color-purple: #7c3aed;     /* deposit */
-  --color-danger: #dc2626;
+  --color-ink: #eaf0f7;        /* primary text (near-white) */
+  --color-surface: #070b12;    /* app background (deepest) */
+  --color-panel: #131c29;      /* cards (lifts off the surface) */
+  --color-panel-2: #0e1622;    /* inset panels / inputs */
+  --color-line: #223046;       /* borders */
+  --color-muted: #8698ad;      /* muted text */
+  --color-brand: #17c9b4;      /* teal primary */
+  --color-brand-2: #0ea294;    /* teal deep */
+  --color-back: #5b8dff;       /* odds / back (blue) */
+  --color-lay: #ff5c8a;        /* lay / danger accent (pink) */
+  --color-gold: #f6b93b;       /* balance amber */
+  --color-purple: #8b5cf6;     /* deposit / gradient accent */
+  --color-danger: #f4555f;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html,
 body {
   background:
-    radial-gradient(1200px 600px at 50% -10%, #ffffff 0%, rgba(255, 255, 255, 0) 60%),
+    radial-gradient(1100px 520px at 12% -8%, rgba(23, 201, 180, 0.12), transparent 58%),
+    radial-gradient(900px 520px at 100% 0%, rgba(139, 92, 246, 0.12), transparent 55%),
     var(--color-surface);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -43,7 +45,7 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c4d0d4;
+  background: #2a3a52;
   border-radius: 20px;
 }
 ::-webkit-scrollbar-track {
@@ -59,6 +61,34 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* Elevated card with a soft inner highlight + deep shadow (glassy in dark). */
 .card-shadow {
-  box-shadow: 0 1px 2px rgba(15, 32, 39, 0.04), 0 8px 24px rgba(15, 32, 39, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 34px rgba(0, 0, 0, 0.45);
+}
+
+/* Reusable premium touches ------------------------------------------------ */
+.bg-play {
+  background-image: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 55%, #4f2bb3 100%);
+}
+.bg-arena {
+  background-image: linear-gradient(135deg, rgba(23, 201, 180, 0.16), rgba(139, 92, 246, 0.16));
+}
+.glow-brand {
+  box-shadow: 0 10px 30px rgba(23, 201, 180, 0.28);
+}
+.glow-play {
+  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+}
+.ring-live {
+  box-shadow: 0 0 0 1px rgba(255, 92, 138, 0.35), 0 0 26px rgba(255, 92, 138, 0.12);
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
 }

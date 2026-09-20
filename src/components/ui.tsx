@@ -3,7 +3,7 @@ import { coins, signed, pnlClass } from "@/lib/format";
 import type { ReactNode } from "react";
 
 export const inputCls =
-  "w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20";
+  "w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-brand focus:bg-panel focus:ring-2 focus:ring-brand/20";
 
 export const labelCls = "mb-1 block text-xs font-semibold text-muted";
 

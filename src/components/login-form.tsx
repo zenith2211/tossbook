@@ -9,7 +9,7 @@ import { IconUser, IconLock, IconEye, IconEyeOff, IconShield } from "./icons";
 const fieldWrap = "relative";
 const iconLeft = "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted";
 const withIcon =
-  "w-full rounded-lg border border-line bg-panel-2 py-2.5 pl-10 pr-10 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20";
+  "w-full rounded-lg border border-line bg-panel-2 py-2.5 pl-10 pr-10 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-brand focus:bg-panel focus:ring-2 focus:ring-brand/20";
 
 export function LoginForm() {
   const router = useRouter();
