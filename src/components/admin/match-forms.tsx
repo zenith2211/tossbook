@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createMatchAction, updateMatchAction } from "@/lib/actions/admin-actions";
 import { ActionForm, SubmitButton, Modal } from "@/components/form";
 import { FormField, fieldCls, fieldLabelCls, btnCls, IconTile } from "./kit";
@@ -105,9 +105,21 @@ function PosterPicker({ defaultUrl = "" }: { defaultUrl?: string }) {
   );
 }
 
+/**
+ * Posts the browser's UTC offset so the server reads the date pickers in the
+ * admin's timezone rather than its own. Starts at 0 for the server render and
+ * corrects on mount, well before any submit.
+ */
+function TimezoneField() {
+  const [offset, setOffset] = useState(0);
+  useEffect(() => setOffset(new Date().getTimezoneOffset()), []);
+  return <input type="hidden" name="tzOffset" value={offset} />;
+}
+
 function AutoStatusTimes({ live = "", close = "" }: { live?: string; close?: string }) {
   return (
     <div className="rounded-xl border border-line bg-panel-2/60 p-3.5">
+      <TimezoneField />
       <div className="flex items-center gap-2">
         <IconTile tone="gold">
           <IconBolt className="h-4 w-4" />

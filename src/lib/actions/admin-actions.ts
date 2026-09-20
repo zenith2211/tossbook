@@ -34,6 +34,30 @@ function num(v: FormDataEntryValue | null, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+/**
+ * Turn a `datetime-local` value into a UTC ISO string using the ADMIN's clock.
+ *
+ * `new Date("2026-09-21T02:31")` has no timezone marker, so it resolves against
+ * whatever the *server* is set to — on a UTC host every time the admin picks
+ * lands hours away from what they typed. The form posts the browser's
+ * `getTimezoneOffset()` alongside it so the conversion happens in their zone.
+ */
+function localToIso(value: FormDataEntryValue | null, tzOffsetMinutes: number): string | null {
+  const raw = String(value ?? "").trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(raw);
+  if (!m) return null;
+  const [, y, mo, d, hh, mi] = m;
+  const utcMs = Date.UTC(+y, +mo - 1, +d, +hh, +mi) + tzOffsetMinutes * 60_000;
+  const parsed = new Date(utcMs);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+/** Minutes to add to the admin's local time to reach UTC (IST posts −330). */
+function tzOffset(formData: FormData): number {
+  const n = Number(formData.get("tzOffset"));
+  return Number.isFinite(n) ? n : 0;
+}
+
 /** Revalidate everything an admin edit can be visible on. */
 function refreshAdmin(...extra: string[]) {
   for (const p of ["/admin", "/admin/matches", "/admin/users", "/admin/bets", "/admin/user-mgmt", "/play", ...extra]) {
@@ -201,16 +225,15 @@ export async function createMatchAction(_prev: ActionResult, formData: FormData)
   const teamA = String(formData.get("teamA") ?? "").trim();
   const teamB = String(formData.get("teamB") ?? "").trim();
   const league = String(formData.get("league") ?? "Cricket").trim() || "Cricket";
-  const startTime = String(formData.get("startTime") ?? "").trim();
   if (!teamA || !teamB) return FAIL("Enter both team names.");
   const rateA = num(formData.get("rateA"), 1.95);
   const rateB = num(formData.get("rateB"), 1.95);
   if (rateA <= 1 || rateB <= 1) return FAIL("Odds must be greater than 1.00 (e.g. 1.95, 2.50).");
-  const iso = startTime ? new Date(startTime).toISOString() : new Date().toISOString();
-  const liveTime = String(formData.get("liveTime") ?? "").trim();
-  const liveIso = liveTime ? new Date(liveTime).toISOString() : null;
-  const endTime = String(formData.get("endTime") ?? "").trim();
-  const endIso = endTime ? new Date(endTime).toISOString() : null;
+
+  const tz = tzOffset(formData);
+  const iso = localToIso(formData.get("startTime"), tz) ?? new Date().toISOString();
+  const liveIso = localToIso(formData.get("liveTime"), tz);
+  const endIso = localToIso(formData.get("endTime"), tz);
   if (endIso && liveIso && new Date(endIso).getTime() <= new Date(liveIso).getTime()) {
     return FAIL("Picks must close after the match goes live.");
   }
@@ -367,12 +390,10 @@ export async function updateMatchAction(_prev: ActionResult, formData: FormData)
   if (!teamA || !teamB) return FAIL("Enter both team names.");
   const league = String(formData.get("league") ?? "Cricket").trim() || "Cricket";
 
-  const startRaw = String(formData.get("startTime") ?? "").trim();
-  const liveRaw = String(formData.get("liveTime") ?? "").trim();
-  const endRaw = String(formData.get("endTime") ?? "").trim();
-  const startIso = startRaw ? new Date(startRaw).toISOString() : match.start_time;
-  const liveIso = liveRaw ? new Date(liveRaw).toISOString() : null;
-  const endIso = endRaw ? new Date(endRaw).toISOString() : null;
+  const tz = tzOffset(formData);
+  const startIso = localToIso(formData.get("startTime"), tz) ?? match.start_time;
+  const liveIso = localToIso(formData.get("liveTime"), tz);
+  const endIso = localToIso(formData.get("endTime"), tz);
   if (endIso && liveIso && new Date(endIso).getTime() <= new Date(liveIso).getTime()) {
     return FAIL("Picks must close after the match goes live.");
   }
