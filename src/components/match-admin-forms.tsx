@@ -116,7 +116,7 @@ export function CreateMatchButton() {
             </Field>
           </div>
           <p className="text-xs text-muted">
-            Odds &amp; limits apply to the Toss &amp; Match markets. You can fine-tune them per market afterwards.
+            Odds &amp; limits apply to the Toss market. You can fine-tune them afterwards.
           </p>
           <SubmitButton className="w-full">Create match</SubmitButton>
         </ActionForm>

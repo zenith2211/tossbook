@@ -23,7 +23,7 @@ export default async function MatchDetail({ params }: { params: Promise<{ id: st
 
   const match = getMatch(Number(id));
   if (!match) notFound();
-  const markets = listMarkets(match.id);
+  const markets = listMarkets(match.id).filter((m) => m.type === "toss");
   const bets = listBets({ matchId: match.id });
 
   return (

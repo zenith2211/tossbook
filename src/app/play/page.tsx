@@ -29,7 +29,9 @@ export default async function PlayHome() {
     start_time: m.start_time,
     end_time: m.end_time,
     image_url: m.image_url,
-    markets: listMarkets(m.id).map((mk) => ({
+    markets: listMarkets(m.id)
+      .filter((mk) => mk.type === "toss")
+      .map((mk) => ({
       id: mk.id,
       type: mk.type,
       name: mk.name,

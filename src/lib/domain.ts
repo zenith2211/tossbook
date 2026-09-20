@@ -348,9 +348,6 @@ export function createMatch(
     db.prepare(
       `INSERT INTO markets (match_id, type, name, status, rate_a, rate_b, min_stake, max_stake) VALUES (?, 'toss', 'Toss Winner', 'open', ?, ?, ?, ?)`,
     ).run(matchId, rateA, rateB, minStake, maxStake);
-    db.prepare(
-      `INSERT INTO markets (match_id, type, name, status, rate_a, rate_b, min_stake, max_stake) VALUES (?, 'match_winner', 'Match Winner', 'open', ?, ?, ?, ?)`,
-    ).run(matchId, rateA, rateB, minStake, maxStake);
     return matchId;
   });
   return getMatch(tx())!;
