@@ -6,6 +6,10 @@ import { IconTelegram, IconCheck } from "@/components/icons";
 
 const TELEGRAM_USER = "RSTOSSBOOK01";
 const TELEGRAM_URL = `https://t.me/${TELEGRAM_USER}`;
+// Telegram can't pre-fill a person's DM directly, so use the share sheet: it
+// opens with this message written; the user taps the admin and hits Send.
+const CONTACT_MESSAGE = "Hey! I'd like to open a Toss Book account. Please help me get started.";
+const TELEGRAM_CONTACT_URL = `https://t.me/share/url?url=${encodeURIComponent(TELEGRAM_URL)}&text=${encodeURIComponent(CONTACT_MESSAGE)}`;
 
 const HIGHLIGHTS = [
   "Live cricket toss & match-winner markets",
@@ -92,7 +96,7 @@ export default async function LoginPage() {
           </div>
 
           <a
-            href={TELEGRAM_URL}
+            href={TELEGRAM_CONTACT_URL}
             target="_blank"
             rel="noreferrer"
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#229ED9] px-4 py-3 text-sm font-bold text-white shadow-sm shadow-[#229ED9]/30 transition hover:brightness-105"
