@@ -574,50 +574,49 @@ const LEDGER_MAP: Record<string, { title: string; kind: ActivityKind }> = {
   transfer_out: { title: "Transfer out", kind: "withdraw" },
 };
 
-export function listActivity(userId: number, limit = 500): Activity[] {
-  const acts: Activity[] = [];
+export function listActivity(userId: number, limit = 2000): Activity[] {
+  type Ev = { key: string; kind: ActivityKind; title: string; detail: string; delta: number; at: string };
+  const evs: Ev[] = [];
 
+  // Cash movements (deposits, withdrawals, transfers). Bet settlements are
+  // derived from the bets below so the running balance stays exact.
   for (const r of listLedger(userId, limit)) {
+    if (r.type === "settle_win" || r.type === "settle_loss") continue;
     const m = LEDGER_MAP[r.type] ?? { title: r.type.replace(/_/g, " "), kind: "adjust" as ActivityKind };
-    acts.push({
-      key: `l${r.id}`,
-      kind: m.kind,
-      title: m.title,
-      detail: r.remark || "",
-      amount: r.amount,
-      balanceAfter: r.balance_after,
-      cash: true,
-      at: r.created_at,
-    });
+    evs.push({ key: `l${r.id}`, kind: m.kind, title: m.title, detail: r.remark || "", delta: r.amount, at: r.created_at });
   }
 
+  // Placing a bet holds the stake (spendable balance drops); the outcome returns
+  // money — win = stake + profit, refund/void = stake back, loss = nothing back.
   for (const b of listBets({ userIds: [userId] })) {
     const detail = `${b.match_title} · ${b.selection_name} · ${b.rate.toFixed(2)}x`;
-    acts.push({
-      key: `bp${b.id}`,
-      kind: "bet_placed",
-      title: "Bet Placed",
-      detail,
-      amount: -b.stake,
-      balanceAfter: null,
-      cash: false,
-      at: b.placed_at,
-    });
-    if (b.status === "void") {
-      acts.push({
+    if (b.status === "lost") {
+      evs.push({ key: `bp${b.id}`, kind: "bet_lost", title: "Bet Lost", detail, delta: -b.stake, at: b.placed_at });
+    } else {
+      evs.push({ key: `bp${b.id}`, kind: "bet_placed", title: "Bet Placed", detail, delta: -b.stake, at: b.placed_at });
+    }
+    if (b.status === "won") {
+      evs.push({ key: `bw${b.id}`, kind: "bet_won", title: "Bet Won", detail, delta: round2(b.stake + b.result_pl), at: b.settled_at ?? b.placed_at });
+    } else if (b.status === "void") {
+      evs.push({
         key: `br${b.id}`,
         kind: "refund",
         title: b.void_reason === "refunded" ? "Bet refunded (match voided)" : "Bet cancelled — refund",
         detail,
-        amount: b.stake,
-        balanceAfter: null,
-        cash: false,
+        delta: b.stake,
         at: b.settled_at ?? b.placed_at,
       });
     }
   }
 
-  acts.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : a.key < b.key ? 1 : -1));
+  // Replay oldest → newest to compute the running (spendable) balance per row.
+  evs.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : a.key < b.key ? -1 : 1));
+  let bal = 0;
+  const acts: Activity[] = evs.map((e) => {
+    bal = round2(bal + e.delta);
+    return { key: e.key, kind: e.kind, title: e.title, detail: e.detail, amount: e.delta, balanceAfter: bal, cash: true, at: e.at };
+  });
+  acts.reverse(); // newest first for display
   return acts;
 }
 
