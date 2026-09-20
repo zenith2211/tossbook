@@ -122,9 +122,10 @@ export async function resetPasswordAction(_prev: ActionResult, formData: FormDat
   if (!isAncestorOf(me.id, childId) || childId === me.id) return FAIL("Not authorised for this account.");
   const pw = String(formData.get("password") ?? "");
   if (pw.length < 6) return FAIL("Password must be at least 6 characters.");
-  setPassword(childId, pw);
+  // clearForceFlag=false → the client must change this temp password at next login.
+  setPassword(childId, pw, false);
   revalidatePath(`/admin/users/${childId}`);
-  return OK("Password reset.");
+  return OK("Password reset. The client must change it at next login.");
 }
 
 // --- Matches & markets (admin only) --------------------------------------

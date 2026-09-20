@@ -45,3 +45,23 @@ export async function changePasswordAction(_prev: ActionResult, formData: FormDa
   setPassword(me.id, next);
   return OK("Password updated.");
 }
+
+// First-login / post-reset forced change. The user is already authenticated and
+// their account is flagged, so we don't ask for the old (default) password —
+// only a new one. Guarded so it can't be used to skip the normal change flow.
+export async function forceChangePasswordAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me) return FAIL("Session expired. Please sign in again.");
+  const full = getUser(me.id);
+  if (!full) return FAIL("Account not found.");
+  if (!full.must_change_pw) return FAIL("A password change isn't required for this account.");
+
+  const next = String(formData.get("next") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  if (next.length < 6) return FAIL("New password must be at least 6 characters.");
+  if (next !== confirm) return FAIL("New password and confirmation do not match.");
+  if (verifyPassword(next, full.password)) return FAIL("Please choose a different password from the default one.");
+
+  setPassword(me.id, next); // clears must_change_pw
+  return OK("Password set.");
+}

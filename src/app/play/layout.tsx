@@ -11,6 +11,7 @@ export default async function PlayLayout({ children }: { children: React.ReactNo
   const me = await getSessionUser();
   if (!me) redirect("/login");
   if (isUpline(me.role)) redirect("/admin");
+  if (me.must_change_pw) redirect("/change-password");
 
   const avail = available(me);
 

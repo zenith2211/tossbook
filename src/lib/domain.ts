@@ -50,8 +50,8 @@ export function createDownlineUser(input: CreateUserInput, createdBy: number): U
   const tx = db.transaction(() => {
     const info = db
       .prepare(
-        `INSERT INTO users (username, password, name, role, parent_id, balance, share_pct, commission_pct, credit_limit)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO users (username, password, name, role, parent_id, balance, share_pct, commission_pct, credit_limit, must_change_pw)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
       )
       .run(
         input.username.trim(),
