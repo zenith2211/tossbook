@@ -24,7 +24,9 @@ export async function createSession(userId: number): Promise<void> {
   store.set(COOKIE, id, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // Secure cookies require HTTPS. Set ALLOW_INSECURE_COOKIES=1 when serving
+    // over plain http:// (e.g. a bare-IP VPS with no TLS yet) so login works.
+    secure: process.env.NODE_ENV === "production" && process.env.ALLOW_INSECURE_COOKIES !== "1",
     path: "/",
     expires,
   });
