@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { logoutAction } from "@/lib/actions/auth-actions";
 import { available, listChildren, shortId } from "@/lib/domain";
-import { fmtDateTime, moneyShort } from "@/lib/format";
+import { fmtDateTime, moneyShort, parseStamp } from "@/lib/format";
 import { ROLE_LABEL } from "@/lib/types";
 import { BRAND_TITLE } from "@/lib/brand";
 import { Avatar, btnCls, StatTile } from "@/components/admin/kit";
@@ -39,7 +39,7 @@ export default async function AdminProfile() {
         <div className="mt-4 grid grid-cols-3 gap-2.5">
           <StatTile label="Balance" value={moneyShort(available(me))} tone="gold" />
           <StatTile label="Clients" value={clients.length} />
-          <StatTile label="Since" value={new Date(me.created_at).getFullYear()} sub={fmtDateTime(me.created_at)} />
+          <StatTile label="Since" value={parseStamp(me.created_at).getFullYear()} sub={fmtDateTime(me.created_at)} />
         </div>
       </section>
 

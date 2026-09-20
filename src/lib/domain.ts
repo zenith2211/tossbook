@@ -891,6 +891,26 @@ export function listActivity(userId: number, limit = 2000): Activity[] {
 
   // Replay oldest → newest to compute the running (spendable) balance per row.
   evs.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : a.key < b.key ? -1 : 1));
+
+  // The replay has to land on the account's spendable balance. If it doesn't,
+  // money arrived without a ledger row (an account seeded or adjusted directly),
+  // so open the book with the difference instead of drifting negative.
+  const user = getUser(userId);
+  if (user) {
+    const replayed = round2(evs.reduce((s, e) => s + e.delta, 0));
+    const opening = round2(available(user) - replayed);
+    if (opening !== 0) {
+      evs.unshift({
+        key: "open0",
+        kind: opening > 0 ? "deposit" : "withdraw",
+        title: "Opening balance",
+        detail: "Carried forward",
+        delta: opening,
+        at: evs[0]?.at ?? user.created_at,
+      });
+    }
+  }
+
   let bal = 0;
   const acts: Activity[] = evs.map((e) => {
     bal = round2(bal + e.delta);

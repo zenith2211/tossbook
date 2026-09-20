@@ -42,8 +42,20 @@ export function pnlClass(n: number): string {
   return "text-muted";
 }
 
+/**
+ * Parse a stored timestamp. SQLite's `datetime('now')` writes
+ * "YYYY-MM-DD HH:MM:SS" in **UTC** with no timezone marker, which `new Date`
+ * would otherwise read as local time — putting every row hours out. Columns
+ * written with `toISOString()` already carry a Z and pass through untouched.
+ */
+export function parseStamp(value: string): Date {
+  return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)
+    ? new Date(`${value.replace(" ", "T")}Z`)
+    : new Date(value);
+}
+
 export function fmtDateTime(iso: string): string {
-  const d = new Date(iso);
+  const d = parseStamp(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString("en-IN", {
     day: "2-digit",
@@ -55,7 +67,7 @@ export function fmtDateTime(iso: string): string {
 }
 
 export function fmtTime(iso: string): string {
-  const d = new Date(iso);
+  const d = parseStamp(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleTimeString("en-IN", {
     hour: "2-digit",
@@ -65,7 +77,7 @@ export function fmtTime(iso: string): string {
 }
 
 export function relTime(iso: string): string {
-  const d = new Date(iso).getTime();
+  const d = parseStamp(iso).getTime();
   const diff = d - Date.now();
   const abs = Math.abs(diff);
   const mins = Math.round(abs / 60000);

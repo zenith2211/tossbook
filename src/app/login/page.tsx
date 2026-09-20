@@ -1,18 +1,37 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
-import { Logo } from "@/components/ui";
+import { BRAND, BRAND_NAME } from "@/lib/brand";
 import { IconTelegram, IconCheck } from "@/components/icons";
 
-const TELEGRAM_USER = "RSTOSSBOOK01";
+const TELEGRAM_USER = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "RSTOSSBOOK01";
 const TELEGRAM_URL = `https://t.me/${TELEGRAM_USER}`;
 
 const HIGHLIGHTS = [
-  "Live cricket toss & match-winner markets",
+  "Live cricket toss markets at 1.95×",
   "Instant, transparent settlements",
-  "Real ₹ balance with a clear statement",
+  "Real ₹ balance with a clear passbook",
   "24×7 support on Telegram",
 ];
+
+/** Brand lockup for the dark hero panel. */
+function HeroMark() {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#0f1825]/70 ring-2 ring-gold/50">
+        <span className="font-display text-base font-extrabold text-gold">{BRAND.prefix}</span>
+      </span>
+      <span className="leading-none">
+        <span className="font-display block whitespace-nowrap text-xl font-extrabold tracking-tight text-white">
+          {BRAND.prefix} {BRAND.first} {BRAND.second}
+        </span>
+        <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.28em] text-white/60">
+          Toss Gaming Arena
+        </span>
+      </span>
+    </div>
+  );
+}
 
 export default async function LoginPage() {
   const me = await getSessionUser();
@@ -31,9 +50,9 @@ export default async function LoginPage() {
         />
 
         <div className="relative flex items-center justify-between">
-          <Logo size="lg" light />
+          <HeroMark />
           <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] backdrop-blur">
-            Est. 2019
+            {BRAND.estd}
           </span>
         </div>
 
@@ -87,7 +106,7 @@ export default async function LoginPage() {
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-line" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">New to Toss Book?</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">New to {BRAND_NAME}?</span>
             <div className="h-px flex-1 bg-line" />
           </div>
 
@@ -101,7 +120,7 @@ export default async function LoginPage() {
           </a>
 
           <p className="mt-8 text-center text-[11px] text-muted/80">
-            Toss Book © 2026 · Play responsibly · 18+
+            {BRAND_NAME} © {new Date().getFullYear()} · Play responsibly · 18+
           </p>
         </div>
       </section>

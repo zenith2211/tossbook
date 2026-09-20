@@ -37,6 +37,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* A class beats the element selector above, so `.theme-light` on <html>
+   repaints the page without needing !important. */
+html.theme-light,
+html.theme-light body {
+  background:
+    radial-gradient(900px 420px at 10% -6%, rgba(43, 124, 122, 0.08), transparent 60%),
+    radial-gradient(760px 420px at 100% 0%, rgba(139, 92, 246, 0.09), transparent 58%),
+    var(--color-surface);
+  background-attachment: fixed;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -181,6 +192,39 @@ input[type="number"] {
 }
 .animate-slide-down {
   animation: slide-down 0.18s ease-out;
+}
+
+/* Player-side flourishes ------------------------------------------------- */
+/* Purple action gradient used by Deposit, BET & PLAY and BET MORE. */
+.bg-grape {
+  background-image: linear-gradient(135deg, #a855f7 0%, #7c3aed 52%, #6d28d9 100%);
+}
+/* Teal action gradient used by Play and Play More. */
+.bg-teal-cta {
+  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-2) 100%);
+}
+/* Thin gradient rule across the top of a match card. */
+.card-topline::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background-image: linear-gradient(90deg, #a855f7, #6366f1 45%, var(--color-brand));
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-toast-in {
+  animation: toast-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-pop-in {
+  animation: pop-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 /* Skeleton shimmer for loading states. */

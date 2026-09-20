@@ -1,60 +1,48 @@
-import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { logoutAction } from "@/lib/actions/auth-actions";
-import { Card, CardHead, Stat } from "@/components/ui";
-import { ChangePasswordForm } from "@/components/change-password-form";
-import { IconLogout } from "@/components/icons";
+import { available, listBetsForUser } from "@/lib/domain";
 import { coins } from "@/lib/format";
-import { ROLE_LABEL } from "@/lib/types";
+import { BRAND } from "@/lib/brand";
+import { ProfileSettings } from "@/components/play/profile-settings";
+import { StatTile } from "@/components/admin/kit";
+import { IconCheckCircle, IconEdit, IconLogout } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
 export default async function Account() {
   const me = (await getSessionUser())!;
+  const picks = listBetsForUser(me.id, 500);
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-lg font-bold">Account</h1>
+    <div className="space-y-4">
+      {/* Identity */}
+      <section className="flex flex-col items-center pt-2 text-center">
+        <span className="relative grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-[#26354a] to-[#0f1825] shadow-lg shadow-black/20 ring-4 ring-gold/30">
+          <span className="font-display text-2xl font-extrabold text-gold">{BRAND.prefix}</span>
+          <span className="absolute bottom-0 right-0 grid h-8 w-8 place-items-center rounded-full border-4 border-[color:var(--color-surface)] bg-brand text-white">
+            <IconEdit className="h-3.5 w-3.5" />
+          </span>
+        </span>
 
-      <Card>
-        <div className="flex items-center gap-3 p-4">
-          <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-2 text-lg font-black text-ink">
-            {me.name.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className="text-base font-bold">{me.name}</div>
-            <div className="text-xs text-muted">
-              @{me.username} · {ROLE_LABEL[me.role]}
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 px-4 pb-4">
-          <Stat label="Balance" value={coins(me.balance)} accent="text-gold" />
-          <Stat label="Exposure" value={coins(me.exposure)} accent={me.exposure > 0 ? "text-lay" : ""} />
-        </div>
-      </Card>
+        <h1 className="font-display mt-3 text-2xl font-extrabold capitalize text-ink">{me.name}</h1>
+        <p className="mt-0.5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-emerald-600">
+          <IconCheckCircle className="h-4 w-4" />
+          {me.status === "active" ? "Active account" : "Account locked"}
+        </p>
+        <p className="text-[12px] text-muted">@{me.username}</p>
+      </section>
 
-      <Card>
-        <CardHead title="Change Password" />
-        <ChangePasswordForm />
-      </Card>
+      <div className="grid grid-cols-3 gap-2">
+        <StatTile label="Balance" value={coins(available(me))} tone="brand" />
+        <StatTile label="Exposure" value={coins(me.exposure)} tone={me.exposure > 0 ? "lay" : "ink"} />
+        <StatTile label="Picks" value={picks.length} />
+      </div>
 
-      <Card>
-        <div className="divide-y divide-line">
-          <Link href="/play/statement" className="flex items-center justify-between px-4 py-3 text-sm hover:bg-ink/5">
-            <span>Passbook</span>
-            <span className="text-muted">›</span>
-          </Link>
-          <Link href="/play/rules" className="flex items-center justify-between px-4 py-3 text-sm hover:bg-ink/5">
-            <span>Rules &amp; Guidelines</span>
-            <span className="text-muted">›</span>
-          </Link>
-        </div>
-      </Card>
+      <ProfileSettings />
 
       <form action={logoutAction}>
-        <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm font-bold text-danger transition hover:bg-danger/20">
-          <IconLogout className="h-4 w-4" /> Sign Out
+        <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-lay/35 bg-lay/5 px-4 py-3.5 text-sm font-bold text-lay transition hover:bg-lay/10">
+          <IconLogout className="h-4 w-4" /> Sign out
         </button>
       </form>
     </div>
