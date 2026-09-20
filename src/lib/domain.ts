@@ -522,6 +522,90 @@ export function listBets(filter: { userIds?: number[]; marketId?: number; matchI
 }
 
 // ---------------------------------------------------------------------------
+// Passbook / activity feed — a single time-sorted log of everything on an
+// account: deposits, withdrawals, bet placements, cancellations/refunds, and
+// settled wins/losses. Cash rows (deposits/withdrawals/wins/losses) carry the
+// running balance and count toward the In/Out/Net totals; bet placements and
+// cancellations are informational (they don't move the balance in this book).
+// ---------------------------------------------------------------------------
+export type ActivityKind =
+  | "deposit"
+  | "withdraw"
+  | "bet_placed"
+  | "bet_won"
+  | "bet_lost"
+  | "refund"
+  | "adjust";
+
+export interface Activity {
+  key: string;
+  kind: ActivityKind;
+  title: string;
+  detail: string;
+  amount: number;
+  balanceAfter: number | null;
+  cash: boolean;
+  at: string;
+}
+
+const LEDGER_MAP: Record<string, { title: string; kind: ActivityKind }> = {
+  opening: { title: "Opening balance", kind: "deposit" },
+  deposit: { title: "Deposit", kind: "deposit" },
+  withdraw: { title: "Withdraw", kind: "withdraw" },
+  settle_win: { title: "Bet Won", kind: "bet_won" },
+  settle_loss: { title: "Bet Lost", kind: "bet_lost" },
+  transfer_in: { title: "Transfer in", kind: "deposit" },
+  transfer_out: { title: "Transfer out", kind: "withdraw" },
+};
+
+export function listActivity(userId: number, limit = 500): Activity[] {
+  const acts: Activity[] = [];
+
+  for (const r of listLedger(userId, limit)) {
+    const m = LEDGER_MAP[r.type] ?? { title: r.type.replace(/_/g, " "), kind: "adjust" as ActivityKind };
+    acts.push({
+      key: `l${r.id}`,
+      kind: m.kind,
+      title: m.title,
+      detail: r.remark || "",
+      amount: r.amount,
+      balanceAfter: r.balance_after,
+      cash: true,
+      at: r.created_at,
+    });
+  }
+
+  for (const b of listBets({ userIds: [userId] })) {
+    const detail = `${b.match_title} · ${b.selection_name} · ${b.rate.toFixed(2)}x`;
+    acts.push({
+      key: `bp${b.id}`,
+      kind: "bet_placed",
+      title: "Bet Placed",
+      detail,
+      amount: -b.stake,
+      balanceAfter: null,
+      cash: false,
+      at: b.placed_at,
+    });
+    if (b.status === "void") {
+      acts.push({
+        key: `br${b.id}`,
+        kind: "refund",
+        title: "Bet cancelled — refund",
+        detail,
+        amount: b.stake,
+        balanceAfter: null,
+        cash: false,
+        at: b.settled_at ?? b.placed_at,
+      });
+    }
+  }
+
+  acts.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : a.key < b.key ? 1 : -1));
+  return acts;
+}
+
+// ---------------------------------------------------------------------------
 // Settlement
 // ---------------------------------------------------------------------------
 export interface SettleResult {

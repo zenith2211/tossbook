@@ -1,20 +1,20 @@
 import { getSessionUser } from "@/lib/auth";
-import { available, listLedger } from "@/lib/domain";
+import { available, listActivity } from "@/lib/domain";
 import { Stat } from "@/components/ui";
-import { LedgerTable } from "@/components/ledger-table";
+import { ActivityFeed } from "@/components/activity-feed";
 import { coins } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function Statement() {
   const me = (await getSessionUser())!;
-  const rows = listLedger(me.id, 300);
+  const activity = listActivity(me.id, 500);
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-lg font-bold">Passbook</h1>
-        <p className="text-sm text-muted">Every activity — deposits, withdrawals, bets won &amp; lost.</p>
+        <p className="text-sm text-muted">Every activity — bets, refunds, wins, losses, deposits &amp; withdrawals.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -22,16 +22,7 @@ export default async function Statement() {
         <Stat label="Available" value={coins(available(me))} />
       </div>
 
-      <LedgerTable
-        rows={rows.map((r) => ({
-          id: r.id,
-          type: r.type,
-          amount: r.amount,
-          balance_after: r.balance_after,
-          remark: r.remark,
-          created_at: r.created_at,
-        }))}
-      />
+      <ActivityFeed rows={activity} />
     </div>
   );
 }

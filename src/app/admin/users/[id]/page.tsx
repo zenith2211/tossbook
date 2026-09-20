@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUser, isAncestorOf } from "@/lib/auth";
-import { getUser, available, listLedger, listBets } from "@/lib/domain";
+import { getUser, available, listActivity, listBets } from "@/lib/domain";
 import { toggleStatusAction } from "@/lib/actions/admin-actions";
 import { Card, CardHead, Stat, Badge, Empty, PnL } from "@/components/ui";
 import {
@@ -9,7 +9,7 @@ import {
   EditSettingsForm,
   ResetPasswordForm,
 } from "@/components/admin-forms";
-import { LedgerTable } from "@/components/ledger-table";
+import { ActivityFeed } from "@/components/activity-feed";
 import { coins, fmtDateTime } from "@/lib/format";
 import { ROLE_LABEL } from "@/lib/types";
 import { IconBack } from "@/components/icons";
@@ -25,7 +25,7 @@ export default async function UserDetail({ params }: { params: Promise<{ id: str
   if (!u || userId === me.id || !isAncestorOf(me.id, userId)) notFound();
 
   const isDirect = u.parent_id === me.id;
-  const ledger = listLedger(u.id, 500);
+  const activity = listActivity(u.id, 500);
   const bets = u.role === "client" ? listBets({ userIds: [u.id] }) : [];
 
   function betBadge(s: string) {
@@ -126,16 +126,7 @@ export default async function UserDetail({ params }: { params: Promise<{ id: str
 
       <div>
         <h2 className="mb-2 text-sm font-bold text-ink">Passbook</h2>
-        <LedgerTable
-          rows={ledger.map((r) => ({
-            id: r.id,
-            type: r.type,
-            amount: r.amount,
-            balance_after: r.balance_after,
-            remark: r.remark,
-            created_at: r.created_at,
-          }))}
-        />
+        <ActivityFeed rows={activity} />
       </div>
     </div>
   );
