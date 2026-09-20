@@ -64,6 +64,7 @@ function migrate() {
       commission_pct REAL NOT NULL DEFAULT 0,
       status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','locked')),
       must_change_pw INTEGER NOT NULL DEFAULT 0,
+      public_id     TEXT,
       created_at    TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -75,6 +76,7 @@ function migrate() {
       team_b      TEXT NOT NULL,
       league      TEXT NOT NULL DEFAULT 'Cricket',
       start_time  TEXT NOT NULL,
+      live_time   TEXT,
       end_time    TEXT,
       image_url   TEXT,
       status      TEXT NOT NULL DEFAULT 'upcoming' CHECK (status IN ('upcoming','live','closed','settled')),
@@ -149,6 +151,16 @@ function migrate() {
       created_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS announcements (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      text        TEXT NOT NULL,
+      icon        TEXT NOT NULL DEFAULT 'info',
+      active      INTEGER NOT NULL DEFAULT 1,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      created_by  INTEGER REFERENCES users(id),
+      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_users_parent ON users(parent_id);
     CREATE INDEX IF NOT EXISTS idx_bets_user ON bets(user_id);
     CREATE INDEX IF NOT EXISTS idx_bets_market ON bets(market_id);
@@ -160,21 +172,36 @@ function migrate() {
   `);
 
   // Backfill columns added after a database may already exist.
-  try {
-    db.exec("ALTER TABLE matches ADD COLUMN end_time TEXT");
-  } catch {
-    /* column already present */
+  for (const stmt of [
+    "ALTER TABLE matches ADD COLUMN end_time TEXT",
+    "ALTER TABLE matches ADD COLUMN image_url TEXT",
+    "ALTER TABLE matches ADD COLUMN live_time TEXT",
+    "ALTER TABLE bets ADD COLUMN void_reason TEXT",
+    "ALTER TABLE users ADD COLUMN public_id TEXT",
+  ]) {
+    try {
+      db.exec(stmt);
+    } catch {
+      /* column already present */
+    }
   }
-  try {
-    db.exec("ALTER TABLE matches ADD COLUMN image_url TEXT");
-  } catch {
-    /* column already present */
+
+  // Every account carries a short opaque reference the admin panel can show
+  // instead of the auto-increment id. Fill it in for rows created earlier.
+  const missing = db.prepare("SELECT id FROM users WHERE public_id IS NULL OR public_id = ''").all() as { id: number }[];
+  if (missing.length) {
+    const set = db.prepare("UPDATE users SET public_id = ? WHERE id = ?");
+    const fill = db.transaction(() => {
+      for (const row of missing) set.run(newPublicId(), row.id);
+    });
+    fill();
   }
-  try {
-    db.exec("ALTER TABLE bets ADD COLUMN void_reason TEXT");
-  } catch {
-    /* column already present */
-  }
+}
+
+/** Opaque, UUID-shaped account reference shown in the admin panel. */
+export function newPublicId(): string {
+  const h = randomBytes(16).toString("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -201,9 +228,9 @@ function seed() {
   // already created the admin (same UNIQUE username), the insert is skipped
   // instead of throwing a UNIQUE-constraint error.
   db.prepare(
-    `INSERT OR IGNORE INTO users (username, password, name, role, parent_id, balance, share_pct, commission_pct)
-     VALUES (?, ?, 'Administrator', 'admin', NULL, ?, 0, 0)`,
-  ).run(adminUser, hashPassword(adminPass), Number.isFinite(adminFloat) ? adminFloat : 1_000_000_000);
+    `INSERT OR IGNORE INTO users (username, password, name, role, parent_id, balance, share_pct, commission_pct, public_id)
+     VALUES (?, ?, 'Admin', 'admin', NULL, ?, 0, 0, ?)`,
+  ).run(adminUser, hashPassword(adminPass), Number.isFinite(adminFloat) ? adminFloat : 1_000_000_000, newPublicId());
 }
 
 // Initialise on module load. Tables are always ensured (CREATE TABLE IF NOT

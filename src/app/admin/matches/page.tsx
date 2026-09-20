@@ -1,76 +1,65 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { listMatches, listMarkets } from "@/lib/domain";
-import { db } from "@/lib/db";
-import { Card, CardHead, Badge, Empty } from "@/components/ui";
-import { CreateMatchButton } from "@/components/match-admin-forms";
-import { fmtDateTime } from "@/lib/format";
-import { IconBack } from "@/components/icons";
+import { dbOverview, listBets, listMatchOverviews } from "@/lib/domain";
+import { MatchesBoard } from "@/components/admin/matches-board";
+import type { MatchBetView, MatchCardView } from "@/components/admin/match-view";
 
 export const dynamic = "force-dynamic";
-
-function openBetsForMatch(matchId: number): number {
-  return (db.prepare("SELECT COUNT(*) AS n FROM bets WHERE match_id = ? AND status='open'").get(matchId) as { n: number }).n;
-}
 
 export default async function MatchesPage() {
   const me = (await getSessionUser())!;
   if (me.role !== "admin") redirect("/admin");
 
-  const matches = listMatches();
+  const overviews = listMatchOverviews();
 
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">Matches</h1>
-          <p className="text-sm text-muted">Create matches, set rates &amp; declare results.</p>
-        </div>
-        <CreateMatchButton />
-      </div>
+  // One query for every bet on the board, then bucketed per match — cheaper
+  // than a round trip for each card.
+  const betsByMatch = new Map<number, MatchBetView[]>();
+  for (const b of listBets({})) {
+    const list = betsByMatch.get(b.match_id) ?? [];
+    list.push({
+      id: b.id,
+      username: b.username,
+      side: b.selection,
+      selectionName: b.selection_name,
+      stake: b.stake,
+      rate: b.rate,
+      status: b.status,
+      resultPl: b.result_pl,
+      placedAt: b.placed_at,
+    });
+    betsByMatch.set(b.match_id, list);
+  }
 
-      <Card>
-        <CardHead title="All Matches" right={<Badge tone="muted">{matches.length}</Badge>} />
-        {matches.length === 0 ? (
-          <Empty>No matches yet. Create your first match to open a market.</Empty>
-        ) : (
-          <ul className="divide-y divide-line">
-            {matches.map((m) => {
-              const markets = listMarkets(m.id);
-              const openMk = markets.filter((mk) => mk.status !== "settled").length;
-              const open = openBetsForMatch(m.id);
-              return (
-                <li key={m.id}>
-                  <Link href={`/admin/matches/${m.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-ink/5">
-                    <div>
-                      <div className="flex items-center gap-2 text-sm font-semibold">
-                        {m.title}
-                        {m.status === "live" ? (
-                          <Badge tone="live">LIVE</Badge>
-                        ) : m.status === "settled" ? (
-                          <Badge tone="brand">Settled</Badge>
-                        ) : m.status === "closed" ? (
-                          <Badge tone="danger">Closed</Badge>
-                        ) : (
-                          <Badge tone="muted">Upcoming</Badge>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted">
-                        {m.league} · {fmtDateTime(m.start_time)} · {openMk} open market(s)
-                        {open > 0 ? ` · ${open} open bet(s)` : ""}
-                      </div>
-                    </div>
-                    <span className="grid h-8 w-8 rotate-180 place-items-center rounded-lg border border-line text-muted">
-                      <IconBack className="h-4 w-4" />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Card>
-    </div>
-  );
+  const matches: MatchCardView[] = overviews.map((o) => ({
+    id: o.match.id,
+    title: o.match.title,
+    league: o.match.league,
+    teamA: o.match.team_a,
+    teamB: o.match.team_b,
+    startTime: o.match.start_time,
+    liveTime: o.match.live_time,
+    endTime: o.match.end_time,
+    imageUrl: o.match.image_url,
+    phase: o.phase,
+    winner: o.winner,
+    settled: o.market?.status === "settled",
+    rateA: o.market?.rate_a ?? 1.95,
+    rateB: o.market?.rate_b ?? 1.95,
+    maxStake: o.market?.max_stake ?? 50000,
+    minStake: o.market?.min_stake ?? 100,
+    betsA: o.betsA,
+    betsB: o.betsB,
+    stakeA: o.stakeA,
+    stakeB: o.stakeB,
+    payoutA: o.payoutA,
+    payoutB: o.payoutB,
+    houseIfA: o.houseIfA,
+    houseIfB: o.houseIfB,
+    totalBets: o.totalBets,
+    totalStake: o.totalStake,
+    bets: betsByMatch.get(o.match.id) ?? [],
+  }));
+
+  return <MatchesBoard matches={matches} db={dbOverview()} />;
 }

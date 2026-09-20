@@ -17,7 +17,8 @@
   --color-gold: #f6b93b;       /* balance amber */
   --color-purple: #8b5cf6;     /* deposit / gradient accent */
   --color-danger: #f4555f;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-heading), var(--font-body), system-ui, sans-serif;
 }
 
 :root {
@@ -91,4 +92,111 @@ input[type="number"] {
 }
 .animate-pulse-soft {
   animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Light console theme — scoped to the admin area.
+
+   Every colour utility in the app resolves through the --color-* variables
+   above, so re-declaring them inside this wrapper repaints the whole subtree
+   (bg-panel, text-ink, border-line, …) without touching the dark player side.
+   ========================================================================== */
+.theme-light {
+  --color-ink: #16283c;
+  --color-surface: #eef4fa;
+  --color-panel: #ffffff;
+  --color-panel-2: #e7eff7;
+  --color-line: #e2eaf2;
+  --color-muted: #7d90a6;
+  --color-brand: #2b7c7a;
+  --color-brand-2: #1d5f5d;
+  --color-back: #4a90d9;
+  --color-lay: #e8697a;
+  --color-gold: #d99b1e;
+  --color-purple: #8b5cf6;
+  --color-danger: #e8697a;
+
+  color-scheme: light;
+  color: var(--color-ink);
+  background:
+    radial-gradient(900px 420px at 10% -6%, rgba(43, 124, 122, 0.08), transparent 60%),
+    radial-gradient(760px 420px at 100% 0%, rgba(74, 144, 217, 0.08), transparent 58%),
+    var(--color-surface);
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+
+/* Cards float on the light background with a soft, cool-toned shadow instead
+   of the dark theme's deep drop shadow. */
+.theme-light .card-shadow {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 24px rgba(28, 58, 92, 0.07);
+}
+.theme-light ::-webkit-scrollbar-thumb {
+  background: #cbd8e6;
+}
+.theme-light .bg-arena {
+  background-image: linear-gradient(135deg, rgba(43, 124, 122, 0.1), rgba(74, 144, 217, 0.1));
+}
+.theme-light .glow-brand {
+  box-shadow: 0 8px 20px rgba(43, 124, 122, 0.25);
+}
+
+/* Headings and figures in the display face. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Soft inset used by inputs and quiet tiles in the light theme. */
+.inset-soft {
+  box-shadow: inset 0 1px 2px rgba(28, 58, 92, 0.06);
+}
+
+/* Announcement ticker -------------------------------------------------- */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: inline-flex;
+  white-space: nowrap;
+  will-change: transform;
+  animation: ticker-scroll var(--ticker-duration, 30s) linear infinite;
+}
+.ticker-viewport:hover .ticker-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
+/* Panel reveal used by expanding rows (P&L, Bets, Wallet Log). */
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-down {
+  animation: slide-down 0.18s ease-out;
+}
+
+/* Skeleton shimmer for loading states. */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-panel-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: shimmer 1.4s infinite;
 }

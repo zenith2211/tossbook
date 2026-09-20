@@ -184,3 +184,190 @@ export function IconBack({ className = base }: IconProps) {
     </svg>
   );
 }
+
+// --- Admin console --------------------------------------------------------
+function Stroked({ className = base, children }: IconProps & { children: React.ReactNode }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {children}
+    </svg>
+  );
+}
+
+export const IconGrid = (p: IconProps) => (
+  <Stroked {...p}>
+    <rect x="3.5" y="3.5" width="7" height="7" rx="1.6" />
+    <rect x="13.5" y="3.5" width="7" height="7" rx="1.6" />
+    <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" />
+    <rect x="13.5" y="13.5" width="7" height="7" rx="1.6" />
+  </Stroked>
+);
+
+export const IconSearch = (p: IconProps) => (
+  <Stroked {...p}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 4.5 4.5" />
+  </Stroked>
+);
+
+export const IconCalendar = (p: IconProps) => (
+  <Stroked {...p}>
+    <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
+    <path d="M3.5 10h17M8 3v4M16 3v4" />
+  </Stroked>
+);
+
+export const IconClock = (p: IconProps) => (
+  <Stroked {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </Stroked>
+);
+
+export const IconEdit = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M4 20h4L19 9a2.5 2.5 0 0 0-3.5-3.5L4 16.5V20Z" />
+    <path d="M14.5 6.5 17.5 9.5" />
+  </Stroked>
+);
+
+export const IconTrash = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M4 7h16M9.5 7V5h5v2M6.5 7l.9 12a2 2 0 0 0 2 1.9h5.2a2 2 0 0 0 2-1.9l.9-12" />
+    <path d="M10.5 11v6M13.5 11v6" />
+  </Stroked>
+);
+
+export const IconMenu = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </Stroked>
+);
+
+export const IconWallet = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M3.5 8.5A2.5 2.5 0 0 1 6 6h11.5a2 2 0 0 1 2 2v1" />
+    <rect x="3.5" y="8.5" width="17" height="11" rx="2.5" />
+    <path d="M16.5 14h1.5" />
+  </Stroked>
+);
+
+export const IconMegaphone = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M4 10v4a1.5 1.5 0 0 0 1.5 1.5H8l7 4.5V5.5L8 10H5.5A1.5 1.5 0 0 0 4 11.5Z" />
+    <path d="M18 9.5a3.5 3.5 0 0 1 0 5" />
+  </Stroked>
+);
+
+export const IconInfo = (p: IconProps) => (
+  <Stroked {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 11v5M12 8h.01" />
+  </Stroked>
+);
+
+export const IconUserPlus = (p: IconProps) => (
+  <Stroked {...p}>
+    <circle cx="9.5" cy="8" r="3.5" />
+    <path d="M3 20c0-3.4 2.9-5.5 6.5-5.5 1.2 0 2.3.2 3.2.6" />
+    <path d="M17.5 14v6M14.5 17h6" />
+  </Stroked>
+);
+
+export const IconUserCog = (p: IconProps) => (
+  <Stroked {...p}>
+    <circle cx="9.5" cy="8" r="3.5" />
+    <path d="M3 20c0-3.4 2.9-5.5 6.5-5.5 .7 0 1.4.08 2 .23" />
+    <circle cx="17.5" cy="17" r="2.6" />
+    <path d="M17.5 12.8v1.6M17.5 19.6v1.6M21 15l-1.4.8M15.4 18.2 14 19M21 19l-1.4-.8M15.4 15.8 14 15" />
+  </Stroked>
+);
+
+export const IconKey = (p: IconProps) => (
+  <Stroked {...p}>
+    <circle cx="8" cy="15" r="4" />
+    <path d="m11 12 8-8M17 6l2 2M14.5 8.5l2 2" />
+  </Stroked>
+);
+
+export const IconDatabase = (p: IconProps) => (
+  <Stroked {...p}>
+    <ellipse cx="12" cy="6" rx="7.5" ry="3" />
+    <path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6" />
+    <path d="M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3" />
+  </Stroked>
+);
+
+export const IconUpload = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M12 16V4.5M8 8l4-3.5L16 8" />
+    <path d="M4.5 15v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" />
+  </Stroked>
+);
+
+export const IconImage = (p: IconProps) => (
+  <Stroked {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+    <circle cx="9" cy="10" r="1.6" />
+    <path d="m4.5 17.5 4.2-4a2 2 0 0 1 2.7-.06l5 4.4" />
+  </Stroked>
+);
+
+export const IconChevronDown = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="m6 9 6 6 6-6" />
+  </Stroked>
+);
+
+export const IconX = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Stroked>
+);
+
+export const IconMinus = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M5 12h14" />
+  </Stroked>
+);
+
+export const IconSliders = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+    <circle cx="16" cy="7" r="2" />
+    <circle cx="10" cy="17" r="2" />
+  </Stroked>
+);
+
+export const IconTrendUp = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M4 16.5 9.5 11l3.5 3.5L20 7" />
+    <path d="M15.5 7H20v4.5" />
+  </Stroked>
+);
+
+export const IconXCircle = (p: IconProps) => (
+  <Stroked {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="m9.5 9.5 5 5M14.5 9.5l-5 5" />
+  </Stroked>
+);
+
+export const IconCheckCircle = (p: IconProps) => (
+  <Stroked {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="m8.5 12 2.5 2.5 4.5-5" />
+  </Stroked>
+);
+
+export const IconBars = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M5 19V11M12 19V5M19 19v-6" />
+  </Stroked>
+);
+
+export const IconDot = ({ className = "h-2 w-2" }: IconProps) => (
+  <svg viewBox="0 0 8 8" className={className} fill="currentColor" aria-hidden>
+    <circle cx="4" cy="4" r="4" />
+  </svg>
+);

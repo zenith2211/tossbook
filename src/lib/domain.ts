@@ -1,6 +1,16 @@
-import { db, hashPassword } from "./db";
+import { db, hashPassword, newPublicId } from "./db";
 import { round2 } from "./format";
-import type { Bet, LedgerEntry, Market, Match, Request, Role, User } from "./types";
+import type {
+  Announcement,
+  Bet,
+  LedgerEntry,
+  Market,
+  Match,
+  MatchPhase,
+  Request,
+  Role,
+  User,
+} from "./types";
 
 // ---------------------------------------------------------------------------
 // Users
@@ -50,8 +60,8 @@ export function createDownlineUser(input: CreateUserInput, createdBy: number): U
   const tx = db.transaction(() => {
     const info = db
       .prepare(
-        `INSERT INTO users (username, password, name, role, parent_id, balance, share_pct, commission_pct, credit_limit, must_change_pw)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+        `INSERT INTO users (username, password, name, role, parent_id, balance, share_pct, commission_pct, credit_limit, must_change_pw, public_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
       )
       .run(
         input.username.trim(),
@@ -63,6 +73,7 @@ export function createDownlineUser(input: CreateUserInput, createdBy: number): U
         input.sharePct,
         input.commissionPct,
         input.creditLimit,
+        newPublicId(),
       );
     const newId = info.lastInsertRowid as number;
 
@@ -105,6 +116,76 @@ export function setPassword(id: number, newPassword: string, clearForceFlag = tr
   db.prepare(
     `UPDATE users SET password = ?, must_change_pw = ?, updated_at = datetime('now') WHERE id = ?`,
   ).run(hashPassword(newPassword), clearForceFlag ? 0 : 1, id);
+}
+
+/**
+ * Admin wallet controls: Add / Deduct credit a client without touching the
+ * admin float, and Set overwrites the balance outright. Every one writes a
+ * ledger row so the client's passbook stays a complete record.
+ */
+export function adjustBalance(
+  userId: number,
+  mode: "add" | "deduct" | "set",
+  amount: number,
+  remark: string,
+  createdBy: number,
+): User {
+  const user = getUser(userId);
+  if (!user) throw new Error("Account not found.");
+  amount = round2(amount);
+  if (mode === "set") {
+    if (amount < 0) throw new Error("Balance cannot be negative.");
+  } else if (!(amount > 0)) {
+    throw new Error("Amount must be greater than zero.");
+  }
+
+  const next = mode === "add" ? round2(user.balance + amount) : mode === "deduct" ? round2(user.balance - amount) : amount;
+  if (next < 0) throw new Error("That would take the balance below zero.");
+  if (next < user.exposure) {
+    throw new Error(`This client has ${user.exposure} held in open bets — the balance cannot go below that.`);
+  }
+
+  const delta = round2(next - user.balance);
+  const tx = db.transaction(() => {
+    db.prepare("UPDATE users SET balance = ?, updated_at = datetime('now') WHERE id = ?").run(next, userId);
+    writeLedger(
+      userId,
+      delta >= 0 ? "deposit" : "withdraw",
+      delta,
+      next,
+      "admin",
+      createdBy,
+      remark || (mode === "set" ? "Balance set by admin" : delta >= 0 ? "Added by admin" : "Deducted by admin"),
+      createdBy,
+    );
+  });
+  tx();
+  return getUser(userId)!;
+}
+
+/**
+ * Permanently removes an account and everything attached to it. Open bets
+ * simply disappear with the account, so this is only offered for accounts the
+ * admin really wants gone.
+ */
+export function deleteUser(userId: number): void {
+  const user = getUser(userId);
+  if (!user) throw new Error("Account not found.");
+  if (user.role === "admin") throw new Error("Admin accounts cannot be deleted.");
+  const tx = db.transaction(() => {
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+    db.prepare("DELETE FROM bets WHERE user_id = ?").run(userId);
+    db.prepare("DELETE FROM ledger WHERE user_id = ?").run(userId);
+    db.prepare("DELETE FROM requests WHERE user_id = ? OR parent_id = ?").run(userId, userId);
+    db.prepare("UPDATE users SET parent_id = NULL WHERE parent_id = ?").run(userId);
+    db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+  });
+  tx();
+}
+
+/** Short reference shown next to a username in the admin list. */
+export function shortId(u: { public_id: string | null; id: number }): string {
+  return (u.public_id ?? String(u.id)).slice(0, 13);
 }
 
 // ---------------------------------------------------------------------------
@@ -324,6 +405,7 @@ export function createMatch(
     teamB: string;
     league: string;
     startTime: string;
+    liveTime?: string | null;
     endTime?: string | null;
     rateA?: number;
     rateB?: number;
@@ -340,10 +422,20 @@ export function createMatch(
   const tx = db.transaction(() => {
     const info = db
       .prepare(
-        `INSERT INTO matches (title, team_a, team_b, league, start_time, end_time, image_url, status, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'upcoming', ?)`,
+        `INSERT INTO matches (title, team_a, team_b, league, start_time, live_time, end_time, image_url, status, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'upcoming', ?)`,
       )
-      .run(data.title, data.teamA, data.teamB, data.league, data.startTime, data.endTime ?? null, data.imageUrl ?? null, createdBy);
+      .run(
+        data.title,
+        data.teamA,
+        data.teamB,
+        data.league,
+        data.startTime,
+        data.liveTime ?? null,
+        data.endTime ?? null,
+        data.imageUrl ?? null,
+        createdBy,
+      );
     const matchId = info.lastInsertRowid as number;
     db.prepare(
       `INSERT INTO markets (match_id, type, name, status, rate_a, rate_b, min_stake, max_stake) VALUES (?, 'toss', 'Toss Winner', 'open', ?, ?, ?, ?)`,
@@ -359,7 +451,15 @@ export function setMatchStatus(id: number, status: Match["status"]) {
 
 export function updateMatch(
   id: number,
-  fields: { teamA?: string; teamB?: string; league?: string; startTime?: string; endTime?: string | null; imageUrl?: string | null },
+  fields: {
+    teamA?: string;
+    teamB?: string;
+    league?: string;
+    startTime?: string;
+    liveTime?: string | null;
+    endTime?: string | null;
+    imageUrl?: string | null;
+  },
 ): Match {
   const cur = getMatch(id);
   if (!cur) throw new Error("Match not found.");
@@ -367,12 +467,192 @@ export function updateMatch(
   const teamB = (fields.teamB ?? cur.team_b).trim() || cur.team_b;
   const league = (fields.league ?? cur.league).trim() || cur.league;
   const startTime = fields.startTime || cur.start_time;
+  const liveTime = fields.liveTime !== undefined ? fields.liveTime : cur.live_time;
   const endTime = fields.endTime !== undefined ? fields.endTime : cur.end_time;
   const imageUrl = fields.imageUrl !== undefined ? fields.imageUrl : cur.image_url;
   db.prepare(
-    `UPDATE matches SET title = ?, team_a = ?, team_b = ?, league = ?, start_time = ?, end_time = ?, image_url = ? WHERE id = ?`,
-  ).run(`${teamA} vs ${teamB}`, teamA, teamB, league, startTime, endTime, imageUrl, id);
+    `UPDATE matches SET title = ?, team_a = ?, team_b = ?, league = ?, start_time = ?, live_time = ?, end_time = ?, image_url = ? WHERE id = ?`,
+  ).run(`${teamA} vs ${teamB}`, teamA, teamB, league, startTime, liveTime, endTime, imageUrl, id);
   return getMatch(id)!;
+}
+
+/** The single toss market every match owns. */
+export function tossMarket(matchId: number): Market | undefined {
+  return db.prepare("SELECT * FROM markets WHERE match_id = ? AND type = 'toss'").get(matchId) as Market | undefined;
+}
+
+/**
+ * Where a match sits right now. Settled markets pin the phase (a voided toss
+ * reads as Cancelled, a declared one as Closed); otherwise the auto-status
+ * times decide, and a match with no times configured is still Pending.
+ */
+export function matchPhase(match: Match, market?: Market | null, now = Date.now()): MatchPhase {
+  if (market?.result === "void") return "cancelled";
+  if (market?.result === "A" || market?.result === "B") return "closed";
+  if (match.status === "settled" || match.status === "closed") return "closed";
+
+  const closesAt = match.end_time ? new Date(match.end_time).getTime() : null;
+  if (closesAt !== null && closesAt <= now) return "closed";
+
+  const livesAt = match.live_time ? new Date(match.live_time).getTime() : null;
+  if (livesAt === null && closesAt === null) return "pending";
+  if (livesAt !== null && livesAt <= now) return "live";
+  if (livesAt === null && closesAt !== null) return "live";
+  return "upcoming";
+}
+
+export interface MatchOverview {
+  match: Match;
+  market: Market | null;
+  phase: MatchPhase;
+  /** Declared winner name, when the toss has been settled to a side. */
+  winner: string | null;
+  betsA: number;
+  betsB: number;
+  stakeA: number;
+  stakeB: number;
+  /** Money the book pays out if that side wins (stake + profit for backers). */
+  payoutA: number;
+  payoutB: number;
+  /** Book profit if that side wins: everything staked minus that side's payout. */
+  houseIfA: number;
+  houseIfB: number;
+  totalBets: number;
+  totalStake: number;
+}
+
+function overviewFor(match: Match): MatchOverview {
+  const market = tossMarket(match.id) ?? null;
+  const rows = market
+    ? (db
+        .prepare(
+          `SELECT selection, COUNT(*) AS n, COALESCE(SUM(stake), 0) AS stake,
+                  COALESCE(SUM(stake * rate), 0) AS payout
+           FROM bets WHERE market_id = ? AND status != 'void' GROUP BY selection`,
+        )
+        .all(market.id) as { selection: "A" | "B"; n: number; stake: number; payout: number }[])
+    : [];
+
+  const a = rows.find((r) => r.selection === "A");
+  const b = rows.find((r) => r.selection === "B");
+  const stakeA = round2(a?.stake ?? 0);
+  const stakeB = round2(b?.stake ?? 0);
+  const payoutA = round2(a?.payout ?? 0);
+  const payoutB = round2(b?.payout ?? 0);
+  const totalStake = round2(stakeA + stakeB);
+
+  return {
+    match,
+    market,
+    phase: matchPhase(match, market),
+    winner:
+      market?.result === "A" ? match.team_a : market?.result === "B" ? match.team_b : null,
+    betsA: a?.n ?? 0,
+    betsB: b?.n ?? 0,
+    stakeA,
+    stakeB,
+    payoutA,
+    payoutB,
+    houseIfA: round2(totalStake - payoutA),
+    houseIfB: round2(totalStake - payoutB),
+    totalBets: (a?.n ?? 0) + (b?.n ?? 0),
+    totalStake,
+  };
+}
+
+/** Every match with the numbers the admin list needs, newest first. */
+export function listMatchOverviews(): MatchOverview[] {
+  return (db.prepare("SELECT * FROM matches ORDER BY id DESC").all() as Match[]).map(overviewFor);
+}
+
+export function getMatchOverview(id: number): MatchOverview | null {
+  const match = getMatch(id);
+  return match ? overviewFor(match) : null;
+}
+
+/** Cancel a match: every open bet is refunded and the card reads CANCELLED. */
+export function cancelMatch(matchId: number, createdBy: number): SettleResult {
+  const market = tossMarket(matchId);
+  if (!market) throw new Error("This match has no toss market.");
+  if (market.status === "settled") throw new Error("This match is already settled.");
+  return settleMarket(market.id, "void", createdBy);
+}
+
+/** Remove a match outright, releasing the exposure any open bets still hold. */
+export function deleteMatch(matchId: number): void {
+  const match = getMatch(matchId);
+  if (!match) throw new Error("Match not found.");
+  const openBets = db.prepare("SELECT * FROM bets WHERE match_id = ? AND status = 'open'").all(matchId) as Bet[];
+  const tx = db.transaction(() => {
+    for (const bet of openBets) {
+      const user = getUser(bet.user_id);
+      if (!user) continue;
+      db.prepare("UPDATE users SET exposure = ? WHERE id = ?").run(round2(Math.max(0, user.exposure - bet.stake)), user.id);
+    }
+    db.prepare("DELETE FROM bets WHERE match_id = ?").run(matchId);
+    db.prepare("DELETE FROM markets WHERE match_id = ?").run(matchId);
+    db.prepare("DELETE FROM matches WHERE id = ?").run(matchId);
+  });
+  tx();
+}
+
+// ---------------------------------------------------------------------------
+// Announcements — the scrolling ticker under the header
+// ---------------------------------------------------------------------------
+export function listAnnouncements(onlyActive = false): Announcement[] {
+  const clause = onlyActive ? "WHERE active = 1" : "";
+  return db
+    .prepare(`SELECT * FROM announcements ${clause} ORDER BY sort_order ASC, id DESC`)
+    .all() as Announcement[];
+}
+
+export function createAnnouncement(text: string, icon: string, createdBy: number): Announcement {
+  const info = db
+    .prepare("INSERT INTO announcements (text, icon, created_by) VALUES (?, ?, ?)")
+    .run(text.trim().slice(0, 300), icon, createdBy);
+  return db.prepare("SELECT * FROM announcements WHERE id = ?").get(info.lastInsertRowid as number) as Announcement;
+}
+
+export function toggleAnnouncement(id: number): void {
+  db.prepare("UPDATE announcements SET active = 1 - active WHERE id = ?").run(id);
+}
+
+export function deleteAnnouncement(id: number): void {
+  db.prepare("DELETE FROM announcements WHERE id = ?").run(id);
+}
+
+// ---------------------------------------------------------------------------
+// Database health — what the "DB Setup" panel reports
+// ---------------------------------------------------------------------------
+export interface DbTableInfo {
+  name: string;
+  rows: number;
+}
+
+export function dbOverview(): { tables: DbTableInfo[]; integrity: string; journal: string; pageSizeKb: number; sizeKb: number } {
+  const names = (
+    db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .all() as { name: string }[]
+  ).map((r) => r.name);
+
+  const tables = names.map((name) => ({
+    name,
+    rows: (db.prepare(`SELECT COUNT(*) AS n FROM "${name}"`).get() as { n: number }).n,
+  }));
+
+  const integrity = (db.pragma("integrity_check", { simple: true }) as string) ?? "unknown";
+  const journal = String(db.pragma("journal_mode", { simple: true }) ?? "");
+  const pageSize = Number(db.pragma("page_size", { simple: true }) ?? 4096);
+  const pageCount = Number(db.pragma("page_count", { simple: true }) ?? 0);
+
+  return {
+    tables,
+    integrity,
+    journal,
+    pageSizeKb: Math.round(pageSize / 1024),
+    sizeKb: Math.round((pageSize * pageCount) / 1024),
+  };
 }
 
 export function updateMarket(

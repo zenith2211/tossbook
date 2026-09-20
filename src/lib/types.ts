@@ -30,6 +30,7 @@ export interface User {
   commission_pct: number;
   status: "active" | "locked";
   must_change_pw: number;
+  public_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,10 +43,39 @@ export interface Match {
   team_a: string;
   team_b: string;
   league: string;
+  /** Scheduled match date & time — what the client card shows ("Starts at"). */
   start_time: string;
+  /** Auto-status: the moment the match flips to LIVE. Falls back to start_time. */
+  live_time: string | null;
+  /** Auto-status: the moment picks CLOSE. No bets or cancellations after this. */
   end_time: string | null;
   image_url: string | null;
   status: "upcoming" | "live" | "closed" | "settled";
+  created_by: number | null;
+  created_at: string;
+}
+
+/**
+ * What the admin match list shows on a card. Unlike the stored `status`, this
+ * is derived from the clock and the toss result, so a match moves through
+ * Pending → Upcoming → Live → Closed on its own.
+ */
+export type MatchPhase = "pending" | "upcoming" | "live" | "closed" | "cancelled";
+
+export const PHASE_LABEL: Record<MatchPhase, string> = {
+  pending: "PENDING",
+  upcoming: "UPCOMING",
+  live: "LIVE",
+  closed: "CLOSED",
+  cancelled: "CANCELLED",
+};
+
+export interface Announcement {
+  id: number;
+  text: string;
+  icon: string;
+  active: number;
+  sort_order: number;
   created_by: number | null;
   created_at: string;
 }

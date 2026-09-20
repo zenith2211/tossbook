@@ -15,6 +15,19 @@ export function money(n: number): string {
 /** Backwards-compatible alias — all amounts render as real ₹ money now. */
 export const coins = money;
 
+/**
+ * Short ₹ amount for tight spots like the header chip, in Indian units:
+ * ₹1.2 Cr, ₹3.4 L, otherwise the full grouped figure.
+ */
+export function moneyShort(n: number): string {
+  const v = round2(n ?? 0);
+  const a = Math.abs(v);
+  const sign = v < 0 ? "−" : "";
+  if (a >= 1e7) return `${sign}₹${Number((a / 1e7).toFixed(a >= 1e8 ? 0 : 1))} Cr`;
+  if (a >= 1e5) return `${sign}₹${Number((a / 1e5).toFixed(1))} L`;
+  return `${sign}₹${inr.format(a)}`;
+}
+
 /** Signed ₹ amount with + / − prefix, for P&L. */
 export function signed(n: number): string {
   const v = round2(n ?? 0);
