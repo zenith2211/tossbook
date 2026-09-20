@@ -15,11 +15,12 @@ export type BetItem = {
   potential_win: number;
   status: "open" | "won" | "lost" | "void";
   result_pl: number;
+  void_reason?: string | null;
   placed_at: string;
   settled_at: string | null;
 };
 
-const FILTERS = ["All", "Live", "Won", "Lost", "Cancelled"] as const;
+const FILTERS = ["All", "Live", "Won", "Lost", "Cancelled", "Refunded"] as const;
 type Filter = (typeof FILTERS)[number];
 
 function matchesFilter(b: BetItem, f: Filter): boolean {
@@ -27,14 +28,16 @@ function matchesFilter(b: BetItem, f: Filter): boolean {
   if (f === "Live") return b.status === "open";
   if (f === "Won") return b.status === "won";
   if (f === "Lost") return b.status === "lost";
-  return b.status === "void";
+  // Admin-voided bets are "refunded"; client self-cancels (and legacy voids) are "cancelled".
+  if (f === "Refunded") return b.status === "void" && b.void_reason === "refunded";
+  return b.status === "void" && b.void_reason !== "refunded";
 }
 
-function statusBadge(s: string) {
-  if (s === "open") return <Badge tone="gold">Open</Badge>;
-  if (s === "won") return <Badge tone="brand">Won</Badge>;
-  if (s === "lost") return <Badge tone="lay">Lost</Badge>;
-  return <Badge tone="muted">Void</Badge>;
+function statusBadge(b: BetItem) {
+  if (b.status === "open") return <Badge tone="gold">Open</Badge>;
+  if (b.status === "won") return <Badge tone="brand">Won</Badge>;
+  if (b.status === "lost") return <Badge tone="lay">Lost</Badge>;
+  return <Badge tone="back">{b.void_reason === "refunded" ? "Refunded" : "Cancelled"}</Badge>;
 }
 
 export function BetsList({ bets }: { bets: BetItem[] }) {
@@ -102,7 +105,7 @@ export function BetsList({ bets }: { bets: BetItem[] }) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <span className="truncate">{b.selection_name}</span>
-                    {statusBadge(b.status)}
+                    {statusBadge(b)}
                   </div>
                   <div className="truncate text-xs text-muted">
                     {b.match_title} · {b.market_type === "toss" ? "Toss" : "Match"} @ {b.rate.toFixed(2)}

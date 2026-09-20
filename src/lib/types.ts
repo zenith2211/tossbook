@@ -78,6 +78,7 @@ export interface Bet {
   potential_win: number;
   status: "open" | "won" | "lost" | "void";
   result_pl: number;
+  void_reason: string | null;
   placed_at: string;
   settled_at: string | null;
 }

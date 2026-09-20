@@ -473,7 +473,7 @@ export function cancelBet(userId: number, betId: number): Bet {
     const releasedExposure = round2(Math.max(0, user.exposure - bet.stake));
     db.prepare("UPDATE users SET exposure = ? WHERE id = ?").run(releasedExposure, user.id);
     db.prepare(
-      "UPDATE bets SET status = 'void', result_pl = 0, settled_at = datetime('now') WHERE id = ?",
+      "UPDATE bets SET status = 'void', result_pl = 0, void_reason = 'cancelled', settled_at = datetime('now') WHERE id = ?",
     ).run(bet.id);
   });
   tx();
@@ -591,7 +591,7 @@ export function listActivity(userId: number, limit = 500): Activity[] {
       acts.push({
         key: `br${b.id}`,
         kind: "refund",
-        title: "Bet cancelled — refund",
+        title: b.void_reason === "refunded" ? "Bet refunded (match voided)" : "Bet cancelled — refund",
         detail,
         amount: b.stake,
         balanceAfter: null,
@@ -633,7 +633,7 @@ export function settleMarket(marketId: number, result: "A" | "B" | "void", creat
 
       if (result === "void") {
         db.prepare("UPDATE users SET exposure = ? WHERE id = ?").run(releasedExposure, user.id);
-        db.prepare("UPDATE bets SET status = 'void', result_pl = 0, settled_at = datetime('now') WHERE id = ?").run(bet.id);
+        db.prepare("UPDATE bets SET status = 'void', result_pl = 0, void_reason = 'refunded', settled_at = datetime('now') WHERE id = ?").run(bet.id);
         outcome.settledBets++;
         continue;
       }

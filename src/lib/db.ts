@@ -110,6 +110,7 @@ function migrate() {
       potential_win REAL NOT NULL,
       status        TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','won','lost','void')),
       result_pl     REAL NOT NULL DEFAULT 0,
+      void_reason   TEXT,
       placed_at     TEXT NOT NULL DEFAULT (datetime('now')),
       settled_at    TEXT
     );
@@ -166,6 +167,11 @@ function migrate() {
   }
   try {
     db.exec("ALTER TABLE matches ADD COLUMN image_url TEXT");
+  } catch {
+    /* column already present */
+  }
+  try {
+    db.exec("ALTER TABLE bets ADD COLUMN void_reason TEXT");
   } catch {
     /* column already present */
   }
