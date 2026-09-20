@@ -9,10 +9,11 @@ import { IconCash } from "./icons";
 
 const ADMIN_TG = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "RSTOSSBOOK01";
 
-// Telegram can't pre-fill a person's DM via a link, so we use the share sheet:
-// it opens with the message already written; the user taps the admin and sends.
-function telegramShareUrl(text: string): string {
-  return `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${ADMIN_TG}`)}&text=${encodeURIComponent(text)}`;
+// Direct link to the admin's Telegram chat. Telegram can't pre-fill the message
+// when opening a person's chat, so we copy the request text to the clipboard and
+// the user just pastes it in the chat that opens.
+function adminChatUrl(): string {
+  return `https://t.me/${ADMIN_TG}`;
 }
 
 const QUICK = [500, 1000, 5000, 10000];
@@ -41,19 +42,23 @@ function FundForm({
     start(async () => {
       const r = await requestFundsAction(type, amt);
       if (!r.ok) return setMsg({ ok: false, text: r.error ?? "Request failed." });
+      const label = isWithdraw ? "Withdrawal" : "Refill / Deposit";
       if (r.message !== "auto") {
-        const amtStr = amt.toLocaleString("en-IN");
-        const text = isWithdraw
-          ? `Hey, I want to WITHDRAW ₹${amtStr} from my Toss Book account (@${username}).`
-          : `Hey, I want to DEPOSIT ₹${amtStr} to my Toss Book account (@${username}).`;
-        window.open(telegramShareUrl(text), "_blank");
+        const text = `${label} request\nUser: @${username}\nAmount: ₹${amt.toLocaleString("en-IN")}`;
+        // Copy the request so the user can paste it into the chat that opens.
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          /* clipboard may be unavailable; the chat still opens */
+        }
+        window.open(adminChatUrl(), "_blank");
       }
       setMsg({
         ok: true,
         text:
           r.message === "auto"
             ? "Request sent to admin on Telegram ✓"
-            : `Opening Telegram — pick @${ADMIN_TG} and tap Send.`,
+            : "Opened @" + ADMIN_TG + " — request copied, just paste & send.",
       });
       setTimeout(close, 2200);
     });
