@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
 import { Logo } from "@/components/ui";
-import { IconTelegram, IconCheck, IconShield } from "@/components/icons";
+import { IconTelegram, IconCheck } from "@/components/icons";
 
 const TELEGRAM_USER = "RSTOSSBOOK01";
 const TELEGRAM_URL = `https://t.me/${TELEGRAM_USER}`;
@@ -99,25 +99,6 @@ export default async function LoginPage() {
           >
             <IconTelegram className="h-5 w-5" /> Contact on Telegram
           </a>
-
-          <div className="mt-3 flex items-center justify-between gap-2">
-            <a
-              href={TELEGRAM_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink"
-            >
-              <IconShield className="h-3.5 w-3.5" /> Withdrawal proof
-            </a>
-            <a
-              href={TELEGRAM_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-semibold text-[#229ED9] hover:underline"
-            >
-              @{TELEGRAM_USER}
-            </a>
-          </div>
 
           <p className="mt-8 text-center text-[11px] text-muted/80">
             Toss Book © 2026 · Play responsibly · 18+
