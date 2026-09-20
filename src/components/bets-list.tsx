@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, Badge, Empty, PnL, Stat } from "./ui";
 import { CancelBetButton } from "./cancel-bet-button";
 import { coins, fmtDateTime } from "@/lib/format";
@@ -16,6 +16,7 @@ export type BetItem = {
   status: "open" | "won" | "lost" | "void";
   result_pl: number;
   void_reason?: string | null;
+  match_end_time?: string | null;
   placed_at: string;
   settled_at: string | null;
 };
@@ -43,6 +44,15 @@ function statusBadge(b: BetItem) {
 export function BetsList({ bets }: { bets: BetItem[] }) {
   const [filter, setFilter] = useState<Filter>("All");
   const [q, setQ] = useState("");
+  // Starts null so SSR and the first client render agree; then ticks so the
+  // Cancel button disappears once a bet's close time passes.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 15000);
+    return () => clearInterval(t);
+  }, []);
+  const closed = (mt?: string | null) => mt != null && now != null && now >= new Date(mt).getTime();
 
   const totals = useMemo(() => {
     const open = bets.filter((b) => b.status === "open");
@@ -118,9 +128,13 @@ export function BetsList({ bets }: { bets: BetItem[] }) {
                     <>
                       <div className="text-sm font-bold tabular-nums">{coins(b.stake)}</div>
                       <div className="text-xs text-brand">returns {coins(b.stake * b.rate)}</div>
-                      <div className="mt-1.5">
-                        <CancelBetButton betId={b.id} />
-                      </div>
+                      {closed(b.match_end_time) ? (
+                        <div className="mt-1.5 text-[11px] font-medium text-muted">Betting closed</div>
+                      ) : (
+                        <div className="mt-1.5">
+                          <CancelBetButton betId={b.id} />
+                        </div>
+                      )}
                     </>
                   ) : b.status === "void" ? (
                     <div className="text-sm text-muted">Returned {coins(b.stake)}</div>

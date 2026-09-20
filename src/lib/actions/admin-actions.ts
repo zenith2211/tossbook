@@ -15,6 +15,8 @@ import {
   settleMarket,
   setMatchStatus,
   getMarket,
+  getMatch,
+  updateMatch,
 } from "@/lib/domain";
 import { type ActionResult, OK, FAIL } from "@/lib/action-result";
 
@@ -167,6 +169,37 @@ export async function createMatchAction(_prev: ActionResult, formData: FormData)
     return OK("Match created with Toss & Match Winner markets.");
   } catch (e) {
     return FAIL(e instanceof Error ? e.message : "Could not create match.");
+  }
+}
+
+export async function updateMatchAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const me = await getSessionUser();
+  if (!me || me.role !== "admin") return FAIL("Only admin can edit matches.");
+  const matchId = num(formData.get("matchId"));
+  const match = getMatch(matchId);
+  if (!match) return FAIL("Match not found.");
+
+  const teamA = String(formData.get("teamA") ?? "").trim();
+  const teamB = String(formData.get("teamB") ?? "").trim();
+  if (!teamA || !teamB) return FAIL("Enter both team names.");
+  const league = String(formData.get("league") ?? "Cricket").trim() || "Cricket";
+
+  const startRaw = String(formData.get("startTime") ?? "").trim();
+  const endRaw = String(formData.get("endTime") ?? "").trim();
+  const startIso = startRaw ? new Date(startRaw).toISOString() : match.start_time;
+  const endIso = endRaw ? new Date(endRaw).toISOString() : null;
+  if (endIso && new Date(endIso).getTime() <= new Date(startIso).getTime()) {
+    return FAIL("Betting close time must be after the start time.");
+  }
+
+  try {
+    updateMatch(matchId, { teamA, teamB, league, startTime: startIso, endTime: endIso });
+    revalidatePath(`/admin/matches/${matchId}`);
+    revalidatePath("/admin/matches");
+    revalidatePath("/play");
+    return OK("Match updated.");
+  } catch (e) {
+    return FAIL(e instanceof Error ? e.message : "Could not update match.");
   }
 }
 

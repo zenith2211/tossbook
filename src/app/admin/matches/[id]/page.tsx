@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getMatch, listMarkets, listBets } from "@/lib/domain";
 import { setMatchStatusAction } from "@/lib/actions/admin-actions";
 import { Card, CardHead, Badge, Empty, PnL } from "@/components/ui";
-import { MarketEditForm, DeclareResultForm } from "@/components/match-admin-forms";
+import { MarketEditForm, DeclareResultForm, EditMatchButton } from "@/components/match-admin-forms";
 import { coins, fmtDateTime } from "@/lib/format";
 import { IconBack } from "@/components/icons";
 
@@ -47,7 +47,8 @@ export default async function MatchDetail({ params }: { params: Promise<{ id: st
           <p className="text-sm text-muted">{match.league} · {fmtDateTime(match.start_time)}</p>
         </div>
         {match.status !== "settled" && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <EditMatchButton match={match} />
             {STATUS_ACTIONS.map((s) => (
               <form action={setMatchStatusAction} key={s.status}>
                 <input type="hidden" name="matchId" value={match.id} />

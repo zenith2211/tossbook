@@ -18,7 +18,12 @@ export default async function PlayHome() {
     if (b.status === "open") backed[b.market_id] = b.selection;
   }
 
-  const matches = listMatches(["live", "upcoming"]);
+  // Once a match's betting-close time passes it leaves the arena (bets remain
+  // visible in My Bets, and results show up in the Passbook after settlement).
+  const now = Date.now();
+  const matches = listMatches(["live", "upcoming"]).filter(
+    (m) => !m.end_time || new Date(m.end_time).getTime() > now,
+  );
   const dtos: MatchDTO[] = matches.map((m) => ({
     id: m.id,
     title: m.title,

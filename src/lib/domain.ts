@@ -357,6 +357,24 @@ export function setMatchStatus(id: number, status: Match["status"]) {
   db.prepare("UPDATE matches SET status = ? WHERE id = ?").run(status, id);
 }
 
+export function updateMatch(
+  id: number,
+  fields: { teamA?: string; teamB?: string; league?: string; startTime?: string; endTime?: string | null; imageUrl?: string | null },
+): Match {
+  const cur = getMatch(id);
+  if (!cur) throw new Error("Match not found.");
+  const teamA = (fields.teamA ?? cur.team_a).trim() || cur.team_a;
+  const teamB = (fields.teamB ?? cur.team_b).trim() || cur.team_b;
+  const league = (fields.league ?? cur.league).trim() || cur.league;
+  const startTime = fields.startTime || cur.start_time;
+  const endTime = fields.endTime !== undefined ? fields.endTime : cur.end_time;
+  const imageUrl = fields.imageUrl !== undefined ? fields.imageUrl : cur.image_url;
+  db.prepare(
+    `UPDATE matches SET title = ?, team_a = ?, team_b = ?, league = ?, start_time = ?, end_time = ?, image_url = ? WHERE id = ?`,
+  ).run(`${teamA} vs ${teamB}`, teamA, teamB, league, startTime, endTime, imageUrl, id);
+  return getMatch(id)!;
+}
+
 export function updateMarket(
   id: number,
   fields: { rateA?: number; rateB?: number; status?: Market["status"]; minStake?: number; maxStake?: number },
@@ -487,6 +505,7 @@ export function listBetsForUser(userId: number, limit = 200): Bet[] {
 export interface BetRow extends Bet {
   username: string;
   match_title: string;
+  match_end_time: string | null;
 }
 
 export function listBets(filter: { userIds?: number[]; marketId?: number; matchId?: number; status?: string } = {}): BetRow[] {
@@ -511,7 +530,7 @@ export function listBets(filter: { userIds?: number[]; marketId?: number; matchI
   const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
   return db
     .prepare(
-      `SELECT b.*, u.username AS username, m.title AS match_title
+      `SELECT b.*, u.username AS username, m.title AS match_title, m.end_time AS match_end_time
        FROM bets b JOIN users u ON u.id = b.user_id JOIN matches m ON m.id = b.match_id
        ${clause} ORDER BY b.id DESC LIMIT 500`,
     )

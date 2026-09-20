@@ -3,6 +3,7 @@
 import { useState, type ChangeEvent } from "react";
 import {
   createMatchAction,
+  updateMatchAction,
   updateMarketAction,
   settleMarketAction,
 } from "@/lib/actions/admin-actions";
@@ -119,6 +120,61 @@ export function CreateMatchButton() {
             Odds &amp; limits apply to the Toss market. You can fine-tune them afterwards.
           </p>
           <SubmitButton className="w-full">Create match</SubmitButton>
+        </ActionForm>
+      )}
+    </Modal>
+  );
+}
+
+// Convert a stored ISO (UTC) timestamp to the local value a datetime-local input expects.
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export function EditMatchButton({
+  match,
+}: {
+  match: { id: number; team_a: string; team_b: string; league: string; start_time: string; end_time: string | null };
+}) {
+  return (
+    <Modal
+      title="Edit match"
+      trigger={(open) => (
+        <button
+          onClick={open}
+          className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink/80 transition hover:border-brand/40 hover:text-ink"
+        >
+          Edit match
+        </button>
+      )}
+    >
+      {(close) => (
+        <ActionForm action={updateMatchAction} onSuccess={() => setTimeout(close, 700)} className="space-y-3">
+          <input type="hidden" name="matchId" value={match.id} />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Team A">
+              <input name="teamA" defaultValue={match.team_a} className={inputCls} />
+            </Field>
+            <Field label="Team B">
+              <input name="teamB" defaultValue={match.team_b} className={inputCls} />
+            </Field>
+          </div>
+          <Field label="League / Series">
+            <input name="league" defaultValue={match.league} className={inputCls} />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Start time">
+              <input name="startTime" type="datetime-local" defaultValue={toLocalInput(match.start_time)} className={inputCls} />
+            </Field>
+            <Field label="Betting closes at" hint="After this, betting is locked & the match leaves the arena.">
+              <input name="endTime" type="datetime-local" defaultValue={toLocalInput(match.end_time)} className={inputCls} />
+            </Field>
+          </div>
+          <SubmitButton className="w-full">Save changes</SubmitButton>
         </ActionForm>
       )}
     </Modal>
