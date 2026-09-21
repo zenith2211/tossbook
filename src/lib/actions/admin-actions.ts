@@ -398,10 +398,15 @@ export async function updateMatchAction(_prev: ActionResult, formData: FormData)
     return FAIL("Picks must close after the match goes live.");
   }
 
+  // Poster: the picker only sends new bytes; `imageMode` says what to do.
+  // keep → leave the stored poster untouched; remove → clear it; custom → save
+  // the new data URL / link.
+  const imageMode = String(formData.get("imageMode") ?? "keep");
   const imageRaw = String(formData.get("imageUrl") ?? "").trim();
   if (imageRaw.length > 1_500_000) {
     return FAIL("Poster image is too large — use an image under ~1 MB or paste a URL.");
   }
+  const imageUrl = imageMode === "keep" ? undefined : imageMode === "remove" ? null : imageRaw || null;
 
   try {
     updateMatch(matchId, {
@@ -411,7 +416,7 @@ export async function updateMatchAction(_prev: ActionResult, formData: FormData)
       startTime: startIso,
       liveTime: liveIso,
       endTime: endIso,
-      imageUrl: imageRaw || null,
+      imageUrl,
     });
     // Odds and the stake ceiling live on the toss market, not the match row.
     // A settled market is frozen — its odds already priced the payouts — so

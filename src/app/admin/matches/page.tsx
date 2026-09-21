@@ -40,7 +40,8 @@ export default async function MatchesPage() {
     startTime: o.match.start_time,
     liveTime: o.match.live_time,
     endTime: o.match.end_time,
-    imageUrl: o.match.image_url,
+    // Cached image endpoint, not inline base64 — keeps the page payload small.
+    imageUrl: o.match.image_url ? `/api/poster/${o.match.id}` : null,
     phase: o.phase,
     winner: o.winner,
     settled: o.market?.status === "settled",

@@ -38,7 +38,8 @@ export default async function PlayHome() {
       status: m.status,
       startTime: m.start_time,
       endTime: m.end_time,
-      imageUrl: m.image_url,
+      // Served from a cached endpoint instead of inlining base64 in the page.
+      imageUrl: m.image_url ? `/api/poster/${m.id}` : null,
       market: mk
         ? {
             id: mk.id,

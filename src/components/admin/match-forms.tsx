@@ -19,11 +19,21 @@ function toLocalInput(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function PosterPicker({ defaultUrl = "" }: { defaultUrl?: string }) {
-  const [value, setValue] = useState(defaultUrl);
+/**
+ * Poster chooser. `existingUrl` is the current poster's cached image endpoint
+ * (edit only) — shown as a preview without shipping the raw image into the
+ * form. It submits `imageMode` so the server knows whether to keep, replace or
+ * remove the poster, and only sends new image bytes when the admin picks one.
+ */
+function PosterPicker({ existingUrl = "" }: { existingUrl?: string }) {
+  const [value, setValue] = useState("");
+  const [removed, setRemoved] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const isData = value.startsWith("data:");
+
+  const mode = value ? "custom" : existingUrl && !removed ? "keep" : "remove";
+  const previewSrc = value || (existingUrl && !removed ? existingUrl : "");
 
   function pick(file: File | undefined) {
     if (!file) return;
@@ -48,7 +58,9 @@ function PosterPicker({ defaultUrl = "" }: { defaultUrl?: string }) {
         </span>
       </div>
 
+      {/* Only a newly chosen image is sent; keep/remove is signalled separately. */}
       <input type="hidden" name="imageUrl" value={value} />
+      <input type="hidden" name="imageMode" value={mode} />
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div>
@@ -82,15 +94,18 @@ function PosterPicker({ defaultUrl = "" }: { defaultUrl?: string }) {
         </div>
       </div>
 
-      {value ? (
+      {previewSrc ? (
         <div className="mt-3 flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="Match poster preview" className="h-14 w-14 rounded-xl border border-line object-cover" />
-          <span className="text-[12px] text-muted">{isData ? "Uploaded image attached" : "Poster URL set"}</span>
+          <img src={previewSrc} alt="Match poster preview" className="h-14 w-14 rounded-xl border border-line object-cover" />
+          <span className="text-[12px] text-muted">
+            {mode === "keep" ? "Current poster" : isData ? "New image attached" : "Poster URL set"}
+          </span>
           <button
             type="button"
             onClick={() => {
               setValue("");
+              setRemoved(true);
               if (fileRef.current) fileRef.current.value = "";
             }}
             className={btnCls("neutral", "ml-auto px-2.5 py-1.5")}
@@ -258,7 +273,7 @@ export function EditMatchModal({ m }: { m: MatchCardView }) {
           </div>
 
           <AutoStatusTimes live={toLocalInput(m.liveTime)} close={toLocalInput(m.endTime)} />
-          <PosterPicker defaultUrl={m.imageUrl ?? ""} />
+          <PosterPicker existingUrl={m.imageUrl ?? ""} />
 
           <div className="flex flex-wrap gap-2 pt-1">
             <SubmitButton idleClass={BTN_PRIMARY}>Save changes</SubmitButton>
