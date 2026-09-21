@@ -921,6 +921,71 @@ export function listActivity(userId: number, limit = 2000): Activity[] {
 }
 
 // ---------------------------------------------------------------------------
+// Admin bet activity — a cross-client log of the moments a bet is placed,
+// cancelled by the client, refunded (match voided) or settled. Built from the
+// bets table so it needs no extra storage; each bet contributes a "placed"
+// event and, once it leaves the open state, one closing event.
+// ---------------------------------------------------------------------------
+export type BetEventKind = "placed" | "cancelled" | "refunded" | "won" | "lost";
+
+export interface BetEvent {
+  key: string;
+  kind: BetEventKind;
+  betId: number;
+  username: string;
+  matchTitle: string;
+  selectionName: string;
+  side: "A" | "B";
+  stake: number;
+  rate: number;
+  resultPl: number;
+  at: string;
+}
+
+export function listBetEvents(clientIds: number[], limit = 400): BetEvent[] {
+  if (!clientIds.length) return [];
+
+  const evs: BetEvent[] = [];
+  for (const b of listBets({ userIds: clientIds })) {
+    const base = {
+      betId: b.id,
+      username: b.username,
+      matchTitle: b.match_title,
+      selectionName: b.selection_name,
+      side: b.selection,
+      stake: b.stake,
+      rate: b.rate,
+    };
+
+    evs.push({ ...base, key: `p${b.id}`, kind: "placed", resultPl: 0, at: b.placed_at });
+
+    if (b.status === "void") {
+      evs.push({
+        ...base,
+        key: `c${b.id}`,
+        // A client cancellation carries void_reason 'cancelled'; an admin match
+        // void carries 'refunded'. Anything else is treated as a refund.
+        kind: b.void_reason === "cancelled" ? "cancelled" : "refunded",
+        resultPl: 0,
+        at: b.settled_at ?? b.placed_at,
+      });
+    } else if (b.status === "won" || b.status === "lost") {
+      evs.push({
+        ...base,
+        key: `s${b.id}`,
+        kind: b.status,
+        resultPl: b.result_pl,
+        at: b.settled_at ?? b.placed_at,
+      });
+    }
+  }
+
+  // Newest first, with a stable tiebreak when two events share a timestamp.
+  evs.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : a.key < b.key ? 1 : -1));
+  return evs.slice(0, limit);
+}
+
+// ---------------------------------------------------------------------------
 // Settlement
 // ---------------------------------------------------------------------------
 export interface SettleResult {

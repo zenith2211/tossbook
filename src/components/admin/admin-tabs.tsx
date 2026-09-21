@@ -8,6 +8,7 @@ import {
   IconTrophy,
   IconUsers,
   IconLedger,
+  IconActivity,
   IconUserCog,
   IconMegaphone,
 } from "@/components/icons";
@@ -17,6 +18,7 @@ const ICONS: Record<AdminTab["key"], (p: { className?: string }) => React.ReactE
   matches: IconTrophy,
   users: IconUsers,
   bets: IconLedger,
+  activity: IconActivity,
   "user-mgmt": IconUserCog,
   announcements: IconMegaphone,
 };

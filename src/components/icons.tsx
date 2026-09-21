@@ -429,6 +429,12 @@ export const IconArrowDownRight = (p: IconProps) => (
   </Stroked>
 );
 
+export const IconActivity = (p: IconProps) => (
+  <Stroked {...p}>
+    <path d="M3 12h4l2.5-7 5 14 2.5-7H21" />
+  </Stroked>
+);
+
 export const IconDot = ({ className = "h-2 w-2" }: IconProps) => (
   <svg viewBox="0 0 8 8" className={className} fill="currentColor" aria-hidden>
     <circle cx="4" cy="4" r="4" />
