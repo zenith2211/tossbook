@@ -118,10 +118,11 @@ input[type="number"] {
   box-shadow: var(--elev-2);
 }
 
-/* Real gradient border for hero cards — a masked ring that keeps the fill. */
+/* Real gradient border for hero cards — a masked ring that keeps the fill.
+   No `isolation` on purpose: it would create a stacking context that traps
+   any fixed modal rendered inside the card beneath the bottom nav. */
 .grad-border {
   position: relative;
-  isolation: isolate;
 }
 .grad-border::before {
   content: "";

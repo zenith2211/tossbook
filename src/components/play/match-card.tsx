@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { coins, fmtTime, round2 } from "@/lib/format";
 import { PickModal, PickPlacedModal, type PickTarget, type PlacedPick } from "./pick-modal";
 import { CancelPickButton } from "./cancel-pick";
-import { IconBell, IconBolt, IconLock, IconPlus, IconXCircle } from "@/components/icons";
+import { IconBell, IconBolt, IconLock, IconPlus, IconX, IconXCircle } from "@/components/icons";
 
 export interface PlayMarketDTO {
   id: number;
@@ -51,6 +51,7 @@ export function PlayMatchCard({ match, available }: { match: PlayMatchDTO; avail
   const [target, setTarget] = useState<PickTarget | null>(null);
   const [placed, setPlaced] = useState<PlacedPick | null>(null);
   const [reminder, setReminder] = useState(false);
+  const [posterOpen, setPosterOpen] = useState(false);
 
   // Null on the first render so server and client markup agree, then ticks.
   useEffect(() => {
@@ -90,11 +91,22 @@ export function PlayMatchCard({ match, available }: { match: PlayMatchDTO; avail
   return (
     <article className="card-topline card-shadow card-hover relative overflow-hidden rounded-2xl border border-line bg-panel">
       {match.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={match.imageUrl} alt="" className="h-32 w-full border-b border-line object-cover" />
+        <button
+          type="button"
+          onClick={() => setPosterOpen(true)}
+          className="group relative block w-full border-b border-line bg-gradient-to-b from-panel-2 to-surface"
+          aria-label="View full poster"
+        >
+          {/* Full poster stays visible (contain); tap opens it fullscreen. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={match.imageUrl} alt={`${match.teamA} vs ${match.teamB} poster`} className="mx-auto h-28 w-full object-contain" />
+          <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold text-white/85 backdrop-blur-sm">
+            Tap to view
+          </span>
+        </button>
       ) : null}
 
-      <div className="p-4 pt-5">
+      <div className="p-3.5">
         {/* Countdown + reminder bell */}
         <div className="flex items-center justify-between gap-3">
           {closed ? (
@@ -120,10 +132,10 @@ export function PlayMatchCard({ match, available }: { match: PlayMatchDTO; avail
           </button>
         </div>
 
-        <p className="mt-2 text-[13px] font-bold text-ink">{match.league}</p>
+        <p className="mt-1.5 truncate text-[12px] font-bold text-ink">{match.league}</p>
 
         {/* Team rows */}
-        <div className="mt-2.5">
+        <div className="mt-2">
           <TeamRow
             name={match.teamA}
             mine={mySide === "A"}
@@ -132,9 +144,9 @@ export function PlayMatchCard({ match, available }: { match: PlayMatchDTO; avail
             onChoose={() => openPicker("A")}
           />
 
-          <div className="relative my-3 flex items-center justify-center">
+          <div className="relative my-2 flex items-center justify-center">
             <span className="absolute inset-x-0 top-1/2 h-px bg-line" />
-            <span className="relative grid h-9 w-9 place-items-center rounded-full border border-line bg-panel text-[11px] font-bold text-muted">
+            <span className="relative grid h-7 w-7 place-items-center rounded-full border border-line bg-panel text-[10px] font-bold text-muted">
               vs
             </span>
           </div>
@@ -150,7 +162,7 @@ export function PlayMatchCard({ match, available }: { match: PlayMatchDTO; avail
 
         {/* Locked summary once the client has money on the match */}
         {myStake > 0 ? (
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-purple/25 bg-purple/8 px-3.5 py-2.5">
+          <div className="mt-2.5 flex items-center justify-between gap-3 rounded-xl border border-purple/25 bg-purple/8 px-3.5 py-2.5">
             <span className="min-w-0">
               <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
                 <IconLock className="h-3.5 w-3.5" /> Bet locked
@@ -167,13 +179,13 @@ export function PlayMatchCard({ match, available }: { match: PlayMatchDTO; avail
         ) : null}
 
         {/* Facts */}
-        <div className="mt-3 grid grid-cols-2 gap-2.5">
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
           <Fact label="Endtime" value={match.endTime ? fmtTime(match.endTime) : "—"} />
           <Fact label="Toss rate" value={`${(market?.rateA ?? 1.95).toFixed(2)}x`} />
         </div>
 
         {/* Actions */}
-        <div className="mt-3">
+        <div className="mt-2.5">
           {!canPick ? (
             <p className="rounded-2xl border border-line bg-panel-2 py-3 text-center text-[13px] font-semibold text-muted">
               {closed ? "Picks are closed for this match." : "This market is not open."}
@@ -199,13 +211,39 @@ export function PlayMatchCard({ match, available }: { match: PlayMatchDTO; avail
             <button
               type="button"
               onClick={() => openPicker("A")}
-              className="bg-grape glow-play inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-4 text-sm font-extrabold uppercase tracking-[0.06em] text-white transition hover:brightness-110"
+              className="bg-grape glow-play inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold uppercase tracking-[0.06em] text-white transition hover:brightness-110"
             >
               <IconBolt className="h-4 w-4" /> Bet &amp; Play
             </button>
           )}
         </div>
       </div>
+
+      {/* Full-screen poster viewer */}
+      {posterOpen && match.imageUrl ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setPosterOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={match.imageUrl}
+            alt={`${match.teamA} vs ${match.teamB} poster`}
+            className="max-h-[86vh] max-w-full rounded-2xl object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            onClick={() => setPosterOpen(false)}
+            aria-label="Close poster"
+            className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full border border-white/25 bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
+          >
+            <IconX className="h-5 w-5" />
+          </button>
+        </div>
+      ) : null}
 
       {target ? (
         <PickModal
@@ -250,7 +288,7 @@ function TeamRow({
 }) {
   return (
     <div
-      className={`flex items-center justify-between gap-3 rounded-2xl border px-3.5 py-3.5 transition ${
+      className={`flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 transition ${
         mine ? "border-purple/30 bg-purple/8" : "border-line bg-panel-2"
       }`}
     >
@@ -280,9 +318,9 @@ function TeamRow({
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-line bg-panel-2 px-3.5 py-2.5">
+    <div className="rounded-xl border border-line bg-panel-2 px-3 py-2">
       <div className="text-[10px] font-bold uppercase tracking-wider text-muted">{label}</div>
-      <div className="font-display text-base font-extrabold text-ink">{value}</div>
+      <div className="font-display text-sm font-extrabold text-ink">{value}</div>
     </div>
   );
 }

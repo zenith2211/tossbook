@@ -125,7 +125,7 @@ export function Modal({
           onClick={() => setOpen(false)}
         >
           <div
-            className={`w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-md"} max-h-[92vh] overflow-y-auto rounded-t-2xl border border-line bg-panel p-4 shadow-2xl sm:rounded-2xl`}
+            className={`w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-md"} max-h-[92vh] overflow-y-auto rounded-t-2xl border border-line bg-panel p-4 pb-28 shadow-2xl sm:rounded-2xl sm:pb-5`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
