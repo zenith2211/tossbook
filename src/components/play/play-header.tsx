@@ -30,7 +30,7 @@ export function PlayHeader({ username, balance }: { username: string; balance: n
 
   return (
     <>
-      <header className="glass sticky top-0 z-40 border-b border-line">
+      <header className="sticky top-0 z-40 border-b border-line bg-panel">
         <div className="mx-auto flex max-w-2xl items-center gap-2 px-3 py-2.5 sm:px-4">
           <Link href="/play" className="flex shrink-0 items-center gap-2.5" aria-label="Matches">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#26354a] to-[#0f1825] shadow-md shadow-black/20 ring-2 ring-gold/40">

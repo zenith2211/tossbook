@@ -64,7 +64,7 @@ export function AdminHeader({
 
   return (
     <>
-      <header className="glass sticky top-0 z-40 border-b border-line">
+      <header className="sticky top-0 z-40 border-b border-line bg-panel">
         <div className="mx-auto flex max-w-5xl items-center gap-1.5 px-2.5 py-2.5 sm:gap-2 sm:px-4">
           <Link href="/admin" aria-label="Admin home" className="min-w-0">
             <BrandMark />
