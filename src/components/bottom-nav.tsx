@@ -10,7 +10,7 @@ export function BottomNav({ items, allWidths = false }: { items: NavItem[]; allW
   const path = usePathname();
   return (
     <nav
-      className={`glass fixed inset-x-0 bottom-0 z-30 border-t border-line shadow-[0_-8px_30px_rgba(0,0,0,0.18)] ${allWidths ? "" : "md:hidden"}`}
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-panel shadow-[0_-8px_30px_rgba(0,0,0,0.5)] ${allWidths ? "" : "md:hidden"}`}
     >
       <div className="mx-auto flex max-w-2xl items-stretch">
         {items.map((it) => {

@@ -2,128 +2,88 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
 import { BRAND, BRAND_NAME } from "@/lib/brand";
-import { IconTelegram, IconCheck } from "@/components/icons";
+import { IconTelegram, IconShield, IconBolt, IconClock } from "@/components/icons";
 
 const TELEGRAM_USER = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "RSTOSSBOOK01";
 const TELEGRAM_URL = `https://t.me/${TELEGRAM_USER}`;
 
-const HIGHLIGHTS = [
-  "Live cricket toss markets at 1.95×",
-  "Instant, transparent settlements",
-  "Real ₹ balance with a clear passbook",
-  "24×7 support on Telegram",
+const TRUST = [
+  { icon: <IconShield className="h-4 w-4" />, value: BRAND.estd.replace(/\D/g, "") || "2019", label: "Trusted since" },
+  { icon: <IconClock className="h-4 w-4" />, value: "~10m", label: "Settlement" },
+  { icon: <IconBolt className="h-4 w-4" />, value: "24×7", label: "Support" },
 ];
-
-/** Brand lockup for the dark hero panel. */
-function HeroMark() {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#0f1825]/70 ring-2 ring-gold/50">
-        <span className="font-display text-base font-extrabold text-gold">{BRAND.prefix}</span>
-      </span>
-      <span className="leading-none">
-        <span className="font-display block whitespace-nowrap text-xl font-extrabold tracking-tight text-white">
-          {BRAND.prefix} {BRAND.first} {BRAND.second}
-        </span>
-        <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.28em] text-white/60">
-          Toss Gaming Arena
-        </span>
-      </span>
-    </div>
-  );
-}
 
 export default async function LoginPage() {
   const me = await getSessionUser();
   if (me) redirect("/");
 
   return (
-    <main className="min-h-dvh w-full lg:grid lg:grid-cols-[1.1fr_1fr]">
-      {/* ---------------- Brand hero ---------------- */}
-      <section className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0b3f3c] via-brand to-brand-2 px-6 py-8 text-white lg:px-14 lg:py-14">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-30"
-          style={{
-            backgroundImage:
-              "radial-gradient(55% 45% at 15% 0%, rgba(255,255,255,0.35), transparent 60%), radial-gradient(45% 45% at 100% 100%, rgba(0,0,0,0.35), transparent 60%), repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 76px)",
-          }}
-        />
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10">
+      {/* Ambient premium glows */}
+      <div className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-brand/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-24 top-10 h-80 w-80 rounded-full bg-purple/20 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-[-6rem] left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-gold/10 blur-3xl" />
 
-        <div className="relative flex items-center justify-between">
-          <HeroMark />
-          <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] backdrop-blur">
-            {BRAND.estd}
+      <div className="relative w-full max-w-sm">
+        {/* Brand lockup */}
+        <div className="mb-6 flex flex-col items-center text-center">
+          <span className="glow-gold grid h-20 w-20 place-items-center rounded-3xl bg-obsidian ring-2 ring-gold/50">
+            <span className="font-display text-2xl font-extrabold text-gold">{BRAND.prefix}</span>
           </span>
-        </div>
-
-        <div className="relative my-8 lg:my-0">
-          <h1 className="max-w-md text-3xl font-black leading-tight tracking-tight lg:text-[2.6rem]">
-            Back the toss.<br className="hidden lg:block" /> Win instantly.
+          <h1 className="font-display mt-4 text-2xl font-extrabold tracking-tight">
+            <span className="text-ink">{BRAND.prefix} </span>
+            <span className="text-gradient-brand">
+              {BRAND.first} {BRAND.second}
+            </span>
           </h1>
-          <p className="mt-3 max-w-md text-sm text-white/80 lg:text-base">
-            The original live cricket toss gaming arena — fast markets, clean settlements, real balance.
-          </p>
-
-          <ul className="mt-6 hidden space-y-2.5 lg:block">
-            {HIGHLIGHTS.map((h) => (
-              <li key={h} className="flex items-center gap-3 text-sm text-white/90">
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-white/15">
-                  <IconCheck className="h-3 w-3" />
-                </span>
-                {h}
-              </li>
-            ))}
-          </ul>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.32em] text-muted">Toss Gaming Arena</p>
         </div>
 
-        <div className="relative hidden items-center gap-6 text-white/80 lg:flex">
-          <div>
-            <div className="text-2xl font-black text-white">2019</div>
-            <div className="text-[11px] uppercase tracking-wider text-white/60">Trusted since</div>
+        {/* Sign-in card */}
+        <section className="grad-border card-elevated relative overflow-hidden rounded-3xl border border-line bg-panel/85 p-6 backdrop-blur-xl sm:p-7">
+          <div className="relative">
+            <h2 className="font-display text-xl font-extrabold text-ink">Welcome back</h2>
+            <p className="mt-1 text-sm text-muted">Sign in to your account to continue.</p>
+
+            <div className="mt-5">
+              <LoginForm />
+            </div>
+
+            <div className="my-5 flex items-center gap-3">
+              <span className="h-px flex-1 bg-line" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">New here?</span>
+              <span className="h-px flex-1 bg-line" />
+            </div>
+
+            <a
+              href={TELEGRAM_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-back/30 bg-back/10 px-4 py-3 text-sm font-bold text-back transition hover:bg-back/15"
+            >
+              <IconTelegram className="h-5 w-5" /> Contact on Telegram
+            </a>
           </div>
-          <div className="h-8 w-px bg-white/20" />
-          <div>
-            <div className="text-2xl font-black text-white">~10m</div>
-            <div className="text-[11px] uppercase tracking-wider text-white/60">Settlement</div>
-          </div>
-          <div className="h-8 w-px bg-white/20" />
-          <div>
-            <div className="text-2xl font-black text-white">24×7</div>
-            <div className="text-[11px] uppercase tracking-wider text-white/60">Support</div>
-          </div>
+        </section>
+
+        {/* Trust strip */}
+        <div className="mt-5 grid grid-cols-3 gap-2.5">
+          {TRUST.map((t) => (
+            <div
+              key={t.label}
+              className="card-shadow rounded-2xl border border-line bg-panel/70 px-2 py-3 text-center backdrop-blur-md"
+            >
+              <span className="mx-auto grid h-7 w-7 place-items-center rounded-lg bg-brand/12 text-brand">{t.icon}</span>
+              <div className="font-display mt-1.5 text-base font-extrabold text-ink">{t.value}</div>
+              <div className="text-[9px] font-semibold uppercase tracking-wider text-muted">{t.label}</div>
+            </div>
+          ))}
         </div>
-      </section>
 
-      {/* ---------------- Sign-in ---------------- */}
-      <section className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
-        <div className="w-full max-w-sm">
-          <div className="mb-6">
-            <h2 className="text-2xl font-extrabold text-ink">Sign in</h2>
-            <p className="mt-1 text-sm text-muted">Welcome back — access your account to continue.</p>
-          </div>
-
-          <LoginForm />
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-line" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">New to {BRAND_NAME}?</span>
-            <div className="h-px flex-1 bg-line" />
-          </div>
-
-          <a
-            href={TELEGRAM_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#229ED9] px-4 py-3 text-sm font-bold text-white shadow-sm shadow-[#229ED9]/30 transition hover:brightness-105"
-          >
-            <IconTelegram className="h-5 w-5" /> Contact on Telegram
-          </a>
-
-          <p className="mt-8 text-center text-[11px] text-muted/80">
-            {BRAND_NAME} © {new Date().getFullYear()} · Play responsibly · 18+
-          </p>
-        </div>
-      </section>
+        <p className="mt-6 text-center text-[11px] text-muted/80">
+          {BRAND_NAME} © {new Date().getFullYear()} · Play responsibly · 18+
+        </p>
+      </div>
     </main>
   );
 }
