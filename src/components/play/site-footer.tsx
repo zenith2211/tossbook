@@ -1,5 +1,5 @@
 import { BRAND, BRAND_NAME } from "@/lib/brand";
-import { IconWhatsApp } from "@/components/icons";
+import { IconWhatsApp, IconTelegram } from "@/components/icons";
 
 const WA = process.env.NEXT_PUBLIC_WHATSAPP_ADMIN || "";
 const TG = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN || "RSTOSSBOOK01";
@@ -32,7 +32,7 @@ export function SiteFooter() {
         rel="noreferrer"
         className="mt-3 inline-flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-2 text-[13px] font-bold text-ink/75 transition hover:border-brand/40 hover:text-brand"
       >
-        <IconWhatsApp className="h-4 w-4" />
+        {WA ? <IconWhatsApp className="h-4 w-4" /> : <IconTelegram className="h-4 w-4" />}
         {WA ? "Contact via WhatsApp" : `Contact @${TG}`}
       </a>
 
