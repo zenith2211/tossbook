@@ -6,20 +6,19 @@ export const THEME_KEY = "tb.theme";
 
 /**
  * Runs before first paint so the page never flashes the wrong theme.
- * Light is the default; only an explicit "dark" choice opts out.
+ * Dark obsidian is the premium default; only an explicit "light" choice opts in.
  */
 export const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(
   THEME_KEY,
-)});if(t!=="dark"){document.documentElement.classList.add("theme-light")}}catch(e){document.documentElement.classList.add("theme-light")}})()`;
+)});if(t==="light"){document.documentElement.classList.add("theme-light")}}catch(e){}})()`;
 
 function readTheme(): "light" | "dark" {
   return document.documentElement.classList.contains("theme-light") ? "light" : "dark";
 }
 
 export function useTheme() {
-  // Start as "light" to match what the pre-paint script does by default, then
-  // sync to the real value once mounted.
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  // Start as "dark" to match the pre-paint default, then sync once mounted.
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => setTheme(readTheme()), []);
 

@@ -7,7 +7,6 @@ import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { ADMIN_TABS } from "@/components/admin/nav-items";
 import { Ticker } from "@/components/admin/ticker";
-import { IconTile } from "@/components/admin/kit";
 import { BottomNav, type NavItem } from "@/components/bottom-nav";
 import { IconShield, IconCricket, IconTicket, IconBook, IconUser } from "@/components/icons";
 
@@ -28,7 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ];
 
   return (
-    <div className="theme-light min-h-dvh pb-24">
+    <div className="theme-dark min-h-dvh pb-24">
       <AdminHeader
         username={me.username}
         balance={available(me)}
@@ -39,18 +38,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <Ticker items={announcements} />
 
       <div className="mx-auto max-w-5xl px-3 py-4 sm:px-4">
-        <section className="card-shadow rounded-2xl border border-line bg-panel p-4 sm:p-5">
-          <div className="flex items-center gap-3">
-            <IconTile tone="brand">
-              <IconShield className="h-[18px] w-[18px]" />
-            </IconTile>
+        <section className="card-shadow grad-border relative overflow-hidden rounded-2xl border border-line bg-panel p-4 sm:p-5">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-brand/12 blur-3xl" />
+          <div className="relative flex items-center gap-3">
+            <span className="hairline-top grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-brand/25 bg-brand/10 text-brand">
+              <IconShield className="h-5 w-5" />
+            </span>
             <div>
               <h1 className="font-display text-xl font-extrabold leading-tight text-ink">Admin Panel</h1>
               <p className="text-xs text-muted">{BRAND_TITLE} — Management</p>
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="relative mt-4">
             <AdminTabs />
           </div>
         </section>

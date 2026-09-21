@@ -88,7 +88,7 @@ export function PlayMatchCard({ match, available }: { match: PlayMatchDTO; avail
   }
 
   return (
-    <article className="card-topline card-shadow relative overflow-hidden rounded-2xl border border-line bg-panel">
+    <article className="card-topline card-shadow card-hover relative overflow-hidden rounded-2xl border border-line bg-panel">
       {match.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={match.imageUrl} alt="" className="h-32 w-full border-b border-line object-cover" />

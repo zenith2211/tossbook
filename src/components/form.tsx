@@ -25,7 +25,7 @@ export function SubmitButton({
   const base =
     "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition disabled:opacity-60";
   const variants: Record<string, string> = {
-    brand: "bg-brand text-white hover:bg-brand-2 shadow-sm shadow-brand/30",
+    brand: "bg-teal-cta text-white glow-brand sheen hover:brightness-110",
     back: "bg-back text-white hover:brightness-110",
     lay: "bg-lay text-white hover:brightness-110",
     danger: "bg-danger text-white hover:brightness-110",

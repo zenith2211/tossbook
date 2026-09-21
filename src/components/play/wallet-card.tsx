@@ -19,14 +19,18 @@ export function WalletCard({
   live: boolean;
 }) {
   return (
-    <section className="card-shadow rounded-2xl border border-line bg-panel p-4">
-      <div className="flex items-start justify-between gap-3">
+    <section className="card-elevated grad-border relative overflow-hidden rounded-2xl border border-line bg-panel p-4">
+      {/* soft premium wash */}
+      <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-gold/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-16 -bottom-24 h-48 w-48 rounded-full bg-brand/10 blur-3xl" />
+
+      <div className="relative flex items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted">Total balance</div>
-          <div className="font-display text-3xl font-extrabold tabular-nums text-ink">{coins(balance)}</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Total balance</div>
+          <div className="font-display text-gradient-gold text-4xl font-extrabold tabular-nums">{coins(balance)}</div>
         </div>
         <div className="text-right">
-          <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-gold">Exposure</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Exposure</div>
           <div className={`font-display text-2xl font-extrabold tabular-nums ${exposure > 0 ? "text-lay" : "text-ink"}`}>
             {coins(exposure)}
           </div>
@@ -39,7 +43,7 @@ export function WalletCard({
       </div>
 
       {/* Both actions open the admin's Telegram chat directly — no amount step. */}
-      <div className="mt-4 grid grid-cols-2 gap-2.5">
+      <div className="relative mt-4 grid grid-cols-2 gap-2.5">
         <a
           href={TG_URL}
           target="_blank"

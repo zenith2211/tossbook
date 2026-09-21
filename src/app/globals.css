@@ -1,55 +1,81 @@
 @import "tailwindcss";
 
-/* Dark "gaming arena" theme — deep charcoal-navy with a vibrant teal primary and
-   purple accent, subtle ambient glow. Variable NAMES are kept stable so every
-   existing utility class (bg-panel, border-line, text-muted, …) cascades. */
+/* ==========================================================================
+   Toss Book — premium "Obsidian & Gold" design system.
+
+   Dark is the flagship look for BOTH admin and player: deep obsidian canvas,
+   aurora glows, frosted glass, gradient-bordered cards, gold hero figures.
+   A refined light theme stays available via the player's theme toggle.
+
+   Token NAMES are stable, so every utility (bg-panel, text-ink, border-line,
+   text-gold …) repaints with the theme.
+   ========================================================================== */
 @theme {
-  --color-ink: #eaf0f7;        /* primary text (near-white) */
-  --color-surface: #070b12;    /* app background (deepest) */
-  --color-panel: #131c29;      /* cards (lifts off the surface) */
-  --color-panel-2: #0e1622;    /* inset panels / inputs */
-  --color-line: #223046;       /* borders */
-  --color-muted: #8698ad;      /* muted text */
-  --color-brand: #17c9b4;      /* teal primary */
-  --color-brand-2: #0ea294;    /* teal deep */
-  --color-back: #5b8dff;       /* odds / back (blue) */
-  --color-lay: #ff5c8a;        /* lay / danger accent (pink) */
-  --color-gold: #f6b93b;       /* balance amber */
-  --color-purple: #8b5cf6;     /* deposit / gradient accent */
+  --color-ink: #f2f6fd;        /* primary text (near-white) */
+  --color-surface: #05070d;    /* app background (deepest obsidian) */
+  --color-panel: #101827;      /* cards */
+  --color-panel-2: #0b1220;    /* inset panels / inputs */
+  --color-line: #1f2c40;       /* borders */
+  --color-muted: #8595ac;      /* muted text */
+  --color-brand: #22d3bd;      /* jewel teal primary */
+  --color-brand-2: #0ea394;    /* teal deep */
+  --color-back: #6b9bff;       /* odds / back (blue) */
+  --color-lay: #ff6089;        /* lay / danger accent (pink) */
+  --color-gold: #f5c451;       /* premium gold / balance */
+  --color-purple: #b483ff;     /* deposit / gradient accent */
   --color-danger: #f4555f;
   --font-sans: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-display: var(--font-heading), var(--font-body), system-ui, sans-serif;
+  --radius-card: 1.25rem;
 }
 
-:root {
+/* ---- Dark tokens shared by :root default and the forced .theme-dark ------ */
+:root,
+.theme-dark {
+  --color-ink: #f2f6fd;
+  --color-surface: #05070d;
+  --color-panel: #101827;
+  --color-panel-2: #0b1220;
+  --color-line: #1f2c40;
+  --color-muted: #8595ac;
+  --color-brand: #22d3bd;
+  --color-brand-2: #0ea394;
+  --color-back: #6b9bff;
+  --color-lay: #ff6089;
+  --color-gold: #f5c451;
+  --color-purple: #b483ff;
+  --color-danger: #f4555f;
+
   color-scheme: dark;
+  --sheen: rgba(255, 255, 255, 0.10);
+  --hairline: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(12, 18, 30, 0.66);
+  --card-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 42%);
+  --grad-border: linear-gradient(140deg, rgba(34, 211, 189, 0.55), rgba(180, 131, 255, 0.35) 48%, rgba(245, 196, 81, 0.5));
+  --elev-1: inset 0 1px 0 var(--hairline), 0 14px 38px rgba(0, 0, 0, 0.55);
+  --elev-2: inset 0 1px 0 var(--hairline), 0 26px 60px rgba(0, 0, 0, 0.62);
 }
 
 html,
 body {
   background:
-    radial-gradient(1100px 520px at 12% -8%, rgba(23, 201, 180, 0.12), transparent 58%),
-    radial-gradient(900px 520px at 100% 0%, rgba(139, 92, 246, 0.12), transparent 55%),
+    radial-gradient(1200px 600px at 8% -12%, rgba(34, 211, 189, 0.16), transparent 56%),
+    radial-gradient(1100px 620px at 104% -6%, rgba(180, 131, 255, 0.15), transparent 54%),
+    radial-gradient(1000px 760px at 50% 118%, rgba(245, 196, 81, 0.08), transparent 60%),
     var(--color-surface);
   background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-}
-
-/* A class beats the element selector above, so `.theme-light` on <html>
-   repaints the page without needing !important. */
-html.theme-light,
-html.theme-light body {
-  background:
-    radial-gradient(900px 420px at 10% -6%, rgba(43, 124, 122, 0.08), transparent 60%),
-    radial-gradient(760px 420px at 100% 0%, rgba(139, 92, 246, 0.09), transparent 58%),
-    var(--color-surface);
-  background-attachment: fixed;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-brand) 32%, transparent);
 }
 
 ::-webkit-scrollbar {
@@ -57,7 +83,7 @@ html.theme-light body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a3a52;
+  background: #26364f;
   border-radius: 20px;
 }
 ::-webkit-scrollbar-track {
@@ -73,99 +99,161 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Elevated card with a soft inner highlight + deep shadow (glassy in dark). */
+/* --------------------------------------------------------------------------
+   Surfaces & depth — every card picks up a faint sheen overlay + layered glow
+   -------------------------------------------------------------------------- */
 .card-shadow {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 12px 34px rgba(0, 0, 0, 0.45);
+  background-image: var(--card-sheen);
+  box-shadow: var(--elev-1);
+}
+.card-elevated {
+  background-image: var(--card-sheen);
+  box-shadow: var(--elev-2);
+}
+.card-hover {
+  transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--elev-2);
 }
 
-/* Reusable premium touches ------------------------------------------------ */
+/* Real gradient border for hero cards — a masked ring that keeps the fill. */
+.grad-border {
+  position: relative;
+  isolation: isolate;
+}
+.grad-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--grad-border);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Frosted glass for sticky headers, sheets and nav bars. */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+}
+
+/* Hairline top highlight for premium panels. */
+.hairline-top {
+  position: relative;
+}
+.hairline-top::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sheen), transparent);
+  border-radius: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   Gradients, glows, accents
+   -------------------------------------------------------------------------- */
 .bg-play {
-  background-image: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 55%, #4f2bb3 100%);
+  background-image: linear-gradient(135deg, #b483ff 0%, #7c3aed 55%, #5b21b6 100%);
 }
 .bg-arena {
-  background-image: linear-gradient(135deg, rgba(23, 201, 180, 0.16), rgba(139, 92, 246, 0.16));
+  background-image: linear-gradient(135deg, rgba(34, 211, 189, 0.16), rgba(180, 131, 255, 0.16));
 }
-.glow-brand {
-  box-shadow: 0 10px 30px rgba(23, 201, 180, 0.28);
+.bg-grape {
+  background-image: linear-gradient(135deg, #b877ff 0%, #7c3aed 52%, #5f22c9 100%);
 }
-.glow-play {
-  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+.bg-teal-cta {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--color-brand) 88%, white) 0%, var(--color-brand) 45%, var(--color-brand-2) 100%);
 }
-.ring-live {
-  box-shadow: 0 0 0 1px rgba(255, 92, 138, 0.35), 0 0 26px rgba(255, 92, 138, 0.12);
+.bg-gold-cta {
+  background-image: linear-gradient(135deg, #ffd873 0%, #f5c451 50%, #d99a2a 100%);
+}
+.bg-obsidian {
+  background-image: linear-gradient(135deg, #1b2942 0%, #101a2b 60%, #0a1120 100%);
 }
 
+.glow-brand {
+  box-shadow: 0 14px 38px rgba(34, 211, 189, 0.34);
+}
+.glow-play {
+  box-shadow: 0 14px 38px rgba(124, 58, 237, 0.45);
+}
+.glow-gold {
+  box-shadow: 0 14px 34px rgba(245, 196, 81, 0.34);
+}
+.ring-live {
+  box-shadow: 0 0 0 1px rgba(255, 96, 137, 0.4), 0 0 34px rgba(255, 96, 137, 0.18);
+}
+
+.text-gradient-brand {
+  background-image: linear-gradient(120deg, var(--color-brand), var(--color-purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-gold {
+  background-image: linear-gradient(120deg, #ffe08a, #e7a52f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Moving sheen across premium CTAs. */
+.sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(75deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+  z-index: 1;
+}
+.sheen:hover::after {
+  animation: sheen-sweep 0.9s ease;
+}
+@keyframes sheen-sweep {
+  to { transform: translateX(120%); }
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+.inset-soft {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.card-topline::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background-image: linear-gradient(90deg, #b483ff, #6b9bff 45%, var(--color-brand));
+  border-radius: inherit;
+  z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Animations
+   -------------------------------------------------------------------------- */
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
 }
-.animate-pulse-soft {
-  animation: pulse-soft 1.6s ease-in-out infinite;
-}
+.animate-pulse-soft { animation: pulse-soft 1.6s ease-in-out infinite; }
 
-/* ==========================================================================
-   Light console theme — scoped to the admin area.
-
-   Every colour utility in the app resolves through the --color-* variables
-   above, so re-declaring them inside this wrapper repaints the whole subtree
-   (bg-panel, text-ink, border-line, …) without touching the dark player side.
-   ========================================================================== */
-.theme-light {
-  --color-ink: #16283c;
-  --color-surface: #eef4fa;
-  --color-panel: #ffffff;
-  --color-panel-2: #e7eff7;
-  --color-line: #e2eaf2;
-  --color-muted: #7d90a6;
-  --color-brand: #2b7c7a;
-  --color-brand-2: #1d5f5d;
-  --color-back: #4a90d9;
-  --color-lay: #e8697a;
-  --color-gold: #d99b1e;
-  --color-purple: #8b5cf6;
-  --color-danger: #e8697a;
-
-  color-scheme: light;
-  color: var(--color-ink);
-  background:
-    radial-gradient(900px 420px at 10% -6%, rgba(43, 124, 122, 0.08), transparent 60%),
-    radial-gradient(760px 420px at 100% 0%, rgba(74, 144, 217, 0.08), transparent 58%),
-    var(--color-surface);
-  background-attachment: fixed;
-  min-height: 100dvh;
-}
-
-/* Cards float on the light background with a soft, cool-toned shadow instead
-   of the dark theme's deep drop shadow. */
-.theme-light .card-shadow {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 8px 24px rgba(28, 58, 92, 0.07);
-}
-.theme-light ::-webkit-scrollbar-thumb {
-  background: #cbd8e6;
-}
-.theme-light .bg-arena {
-  background-image: linear-gradient(135deg, rgba(43, 124, 122, 0.1), rgba(74, 144, 217, 0.1));
-}
-.theme-light .glow-brand {
-  box-shadow: 0 8px 20px rgba(43, 124, 122, 0.25);
-}
-
-/* Headings and figures in the display face. */
-.font-display {
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
-}
-
-/* Soft inset used by inputs and quiet tiles in the light theme. */
-.inset-soft {
-  box-shadow: inset 0 1px 2px rgba(28, 58, 92, 0.06);
-}
-
-/* Announcement ticker -------------------------------------------------- */
 @keyframes ticker-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
@@ -176,61 +264,33 @@ input[type="number"] {
   will-change: transform;
   animation: ticker-scroll var(--ticker-duration, 30s) linear infinite;
 }
-.ticker-viewport:hover .ticker-track {
-  animation-play-state: paused;
-}
-@media (prefers-reduced-motion: reduce) {
-  .ticker-track {
-    animation: none;
-  }
-}
+.ticker-viewport:hover .ticker-track { animation-play-state: paused; }
 
-/* Panel reveal used by expanding rows (P&L, Bets, Wallet Log). */
 @keyframes slide-down {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.animate-slide-down {
-  animation: slide-down 0.18s ease-out;
-}
-
-/* Player-side flourishes ------------------------------------------------- */
-/* Purple action gradient used by Deposit, BET & PLAY and BET MORE. */
-.bg-grape {
-  background-image: linear-gradient(135deg, #a855f7 0%, #7c3aed 52%, #6d28d9 100%);
-}
-/* Teal action gradient used by Play and Play More. */
-.bg-teal-cta {
-  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-2) 100%);
-}
-/* Thin gradient rule across the top of a match card. */
-.card-topline::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 3px;
-  background-image: linear-gradient(90deg, #a855f7, #6366f1 45%, var(--color-brand));
-}
+.animate-slide-down { animation: slide-down 0.18s ease-out; }
 
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(-8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.animate-toast-in {
-  animation: toast-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
-}
+.animate-toast-in { animation: toast-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1); }
+
 @keyframes pop-in {
   from { opacity: 0; transform: translateY(10px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.animate-pop-in {
-  animation: pop-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+.animate-pop-in { animation: pop-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track, .animate-pulse-soft, .animate-slide-down,
+  .animate-toast-in, .animate-pop-in, .sheen::after { animation: none; }
 }
 
-/* Skeleton shimmer for loading states. */
-@keyframes shimmer {
-  100% { transform: translateX(100%); }
-}
+/* Skeleton shimmer. */
+@keyframes shimmer { 100% { transform: translateX(100%); } }
 .skeleton {
   position: relative;
   overflow: hidden;
@@ -241,6 +301,62 @@ input[type="number"] {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
   animation: shimmer 1.4s infinite;
+}
+
+/* ==========================================================================
+   Light "gallery" theme — refined premium canvas (player opt-in).
+   ========================================================================== */
+.theme-light {
+  --color-ink: #0f1b2d;
+  --color-surface: #eef2f8;
+  --color-panel: #ffffff;
+  --color-panel-2: #eef3f9;
+  --color-line: #e5ebf3;
+  --color-muted: #6b7c92;
+  --color-brand: #0f9488;
+  --color-brand-2: #0b756b;
+  --color-back: #3b82f6;
+  --color-lay: #e5556e;
+  --color-gold: #c9962b;
+  --color-purple: #7c3aed;
+  --color-danger: #e5556e;
+
+  --sheen: rgba(255, 255, 255, 0.9);
+  --hairline: rgba(255, 255, 255, 0.9);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --card-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 45%);
+  --grad-border: linear-gradient(140deg, rgba(15, 148, 136, 0.45), rgba(124, 58, 237, 0.28) 48%, rgba(201, 150, 43, 0.42));
+  --elev-1:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 1px 2px rgba(15, 27, 45, 0.04),
+    0 8px 24px rgba(15, 27, 45, 0.06);
+  --elev-2:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 2px 6px rgba(15, 27, 45, 0.06),
+    0 18px 42px rgba(15, 27, 45, 0.10);
+
+  color-scheme: light;
+  color: var(--color-ink);
+  background:
+    radial-gradient(1100px 520px at 8% -8%, rgba(15, 148, 136, 0.10), transparent 60%),
+    radial-gradient(900px 520px at 102% -2%, rgba(122, 90, 248, 0.08), transparent 58%),
+    radial-gradient(1000px 620px at 50% 118%, rgba(201, 150, 43, 0.07), transparent 62%),
+    var(--color-surface);
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+
+.theme-light ::-webkit-scrollbar-thumb { background: #cbd8e6; }
+.theme-light .bg-arena {
+  background-image: linear-gradient(135deg, rgba(15, 148, 136, 0.10), rgba(124, 58, 237, 0.10));
+}
+.theme-light .glow-brand { box-shadow: 0 12px 26px rgba(15, 148, 136, 0.24); }
+.theme-light .inset-soft { box-shadow: inset 0 1px 2px rgba(15, 27, 45, 0.06); }
+.theme-light .skeleton::after {
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+}
+.theme-light .bg-obsidian {
+  background-image: linear-gradient(135deg, #16233a 0%, #0f1826 70%, #0b1220 100%);
 }

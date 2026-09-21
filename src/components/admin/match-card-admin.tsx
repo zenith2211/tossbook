@@ -71,7 +71,7 @@ export function MatchCardAdmin({
   }
 
   return (
-    <article className="card-shadow overflow-hidden rounded-2xl border border-line bg-panel">
+    <article className="card-shadow grad-border overflow-hidden rounded-2xl border border-line bg-panel">
       {/* Fixture strip — poster, both teams and the scheduled start. */}
       <div className="flex items-center gap-3 border-b border-line px-4 py-3">
         {m.imageUrl ? (

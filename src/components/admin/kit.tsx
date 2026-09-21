@@ -48,7 +48,9 @@ export function SectionTitle({
 /** Small rounded square holding a glyph, used beside section titles. */
 export function IconTile({ children, tone = "brand" }: { children: ReactNode; tone?: Tone }) {
   return (
-    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${TONE_SOFT[tone]}`}>{children}</span>
+    <span className={`hairline-top grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${TONE_SOFT[tone]}`}>
+      {children}
+    </span>
   );
 }
 
@@ -90,9 +92,8 @@ export const BTN_BASE =
   "inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
 
 export const BTN: Record<BtnTone, string> = {
-  primary:
-    "bg-gradient-to-b from-brand to-brand-2 text-white shadow-sm shadow-brand/25 hover:brightness-110 active:brightness-95",
-  neutral: "border border-line bg-panel text-ink/75 hover:border-brand/35 hover:text-brand",
+  primary: "bg-teal-cta text-white glow-brand sheen hover:brightness-110 active:brightness-95",
+  neutral: "border border-line bg-panel text-ink/75 hover:border-brand/35 hover:text-brand hover:bg-panel-2/60",
   gold: "border border-gold/40 bg-gold/5 text-gold hover:bg-gold/10",
   green: "border border-emerald-500/35 bg-emerald-500/5 text-emerald-600 hover:bg-emerald-500/10",
   red: "border border-lay/40 bg-lay/5 text-lay hover:bg-lay/10",
@@ -168,12 +169,12 @@ export function StatTile({
   const colour =
     tone === "gold" ? "text-gold" : tone === "brand" ? "text-brand" : tone === "lay" ? "text-lay" : tone === "back" ? "text-back" : "text-ink";
   return (
-    <div className="card-shadow rounded-2xl border border-line bg-panel px-4 py-3.5 text-center">
-      <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{label}</div>
-      <div className={`font-display mt-1 whitespace-nowrap text-xl font-extrabold tabular-nums sm:text-2xl ${colour}`}>
+    <div className="card-shadow grad-border relative overflow-hidden rounded-2xl border border-line bg-panel px-4 py-3.5 text-center">
+      <div className="relative text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{label}</div>
+      <div className={`font-display relative mt-1 whitespace-nowrap text-xl font-extrabold tabular-nums sm:text-2xl ${colour}`}>
         {value}
       </div>
-      {sub ? <div className="mt-0.5 text-[11px] text-muted">{sub}</div> : null}
+      {sub ? <div className="relative mt-0.5 text-[11px] text-muted">{sub}</div> : null}
     </div>
   );
 }
@@ -222,7 +223,7 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
 export function Avatar({ name, className = "h-10 w-10" }: { name: string; className?: string }) {
   return (
     <span
-      className={`grid shrink-0 place-items-center rounded-full border border-line bg-panel-2 font-display text-base font-bold uppercase text-muted ${className}`}
+      className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand/15 to-purple/15 font-display text-base font-bold uppercase text-brand ring-1 ring-inset ring-line ${className}`}
     >
       {name.trim().charAt(0) || "?"}
     </span>
